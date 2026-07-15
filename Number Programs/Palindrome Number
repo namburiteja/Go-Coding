@@ -1,0 +1,29 @@
+package main
+
+import "fmt"
+
+func isPalindrome(num int) bool {
+	original := num
+	reverse := 0
+
+	for num > 0 {
+		digit := num % 10
+		reverse = reverse*10 + digit
+		num = num / 10
+	}
+
+	return original == reverse
+}
+
+func main() {
+	var num int
+
+	fmt.Print("Enter a number: ")
+	fmt.Scan(&num)
+
+	if isPalindrome(num) {
+		fmt.Println(num, "is a Palindrome")
+	} else {
+		fmt.Println(num, "is Not a Palindrome")
+	}
+}

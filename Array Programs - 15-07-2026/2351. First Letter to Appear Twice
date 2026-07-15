@@ -1,0 +1,14 @@
+func repeatedCharacter(s string) byte {
+    length := len(s)
+    hashMap := make(map[byte]int)
+    for i:=0;i<length;i++ {
+        char := s[i]
+        value,exists := hashMap[char]
+        if exists {
+            return char
+        }else {
+            hashMap[char] = value
+        }
+    }
+    return 'f'
+}

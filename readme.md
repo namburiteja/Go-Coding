@@ -4,7 +4,6 @@ This repository contains my Go learning journey from basics to advanced concepts
 
 ## Topics Covered
 
-- Hello World
 - Variables
 - Data Types
 - Constants

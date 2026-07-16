@@ -11,8 +11,7 @@ func main(){
 			arr = append(arr,i)
 		}
 	}
-	fmt.Println(arr)
-	int length := len(arr)
+	length := len(arr)
 	if(length < k) {
 		fmt.Println(1)
 	}else {

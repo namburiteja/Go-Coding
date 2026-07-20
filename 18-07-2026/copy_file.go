@@ -1,21 +1,26 @@
 package main
+
 import (
 	"io"
 	"os"
 )
+
 func main() {
-	src,err := os.Open("read.txt")
-	if err!=nil {
-		panic(err)
+
+	src, err := os.Open("read.txt")
+	if err != nil {
 		return
 	}
 	defer src.Close()
-	dest,err := os.Open("tolly.txt")
-	if err!=nil {
-		panic(err)
+
+	dst, err := os.Create("copy.txt")
+	if err != nil {
 		return
 	}
-	defer dest.Close()
-	io.Copy(src,dest)
+	defer dst.Close()
 
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		return
+	}
 }

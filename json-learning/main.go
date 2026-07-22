@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
+	"time"
 )
 
 type Metadata struct {
@@ -63,16 +65,97 @@ type LogisticsData struct {
 	Shipments []Shipment `json:"shipments"`
 }
 func shipments(data LogisticsData) {
-	//Filtering + Sorting: Find all shipments where status is "Delayed" or "Customs Hold", 
-	// and sort them by estimated_delivery in ascending order.
 	n := len(data.Shipments)
-	StatusArr := []string{}
+	FilteredArr := []Shipment{}
 	for i:=0;i<n;i++ {
 		if(data.Shipments[i].Status=="Delayed" || data.Shipments[i].Status=="Customs Hold"){
-			StatusArr = append(StatusArr,data.Shipments[i].ShipmentID)
+			FilteredArr = append(FilteredArr,data.Shipments[i])
 		}
 	}
-	fmt.Println(StatusArr)
+	sort.Slice(FilteredArr,func(i,j int) bool {
+		return FilteredArr[i].EstimatedDelivery < FilteredArr[j].EstimatedDelivery
+	})
+	nn := len(FilteredArr)
+	for i:=0;i<nn;i++ {
+		fmt.Println(FilteredArr[i].ShipmentID,FilteredArr[i].Status,FilteredArr[i].EstimatedDelivery)
+	}
+}
+func totalRevenue(data LogisticsData){
+	//Calculate the total revenue (cost_breakdown.total) grouped by carrier
+	TotalRevenue := make(map[string]float64)
+	n := len(data.Shipments)
+	for i:=0;i<n;i++ {
+		Carrier := data.Shipments[i].Carrier
+		Revenue := data.Shipments[i].CostBreakdown.Total
+		TotalRevenue[Carrier] = TotalRevenue[Carrier]+Revenue
+	}
+	fmt.Println(TotalRevenue)
+}
+func maximumRevenue(data LogisticsData){
+	TotalRevenue := make(map[string]float64)
+	n := len(data.Shipments)
+	for i:=0;i<n;i++ {
+		Carrier := data.Shipments[i].Carrier
+		Revenue := data.Shipments[i].CostBreakdown.Total
+		TotalRevenue[Carrier] = TotalRevenue[Carrier]+Revenue
+	}
+	var Maxi float64
+	var Carrier string
+	for key,value := range TotalRevenue {
+		if(value>Maxi){
+			Maxi = value
+			Carrier = key
+		}
+	}
+	fmt.Println(Carrier,Maxi)
+}
+func longestTransit(data LogisticsData){
+	var maxDuration time.Duration
+	var longestShipment Shipment
+	for _,shipment := range data.Shipments {
+		if len(shipment.TrackingEvents) < 2 {
+			continue
+		}
+		firstTime , err := time.Parse(time.RFC3339,shipment.TrackingEvents[0].Timestamp)
+		if err!=nil {
+			continue
+		}
+		lastTime,err := time.Parse(time.RFC3339,shipment.TrackingEvents[len(shipment.TrackingEvents)-1].Timestamp)
+		if err!=nil {
+			continue
+		} 
+		duration := lastTime.Sub(firstTime)
+		if duration > maxDuration {
+			maxDuration = duration
+			longestShipment = shipment
+		}
+	}
+	fmt.Println("Shipment ID :", longestShipment.ShipmentID)
+	fmt.Println("Transit Time:", maxDuration.Hours(), "hours")
+}
+func riskReport(data LogisticsData) {
+	//Identify all is_international shipments where weight_kg > 20 and cost_breakdown.insurance == 0.
+	//These represent heavy international shipments with no insurance — flag them as a "risk report."
+	for _,shipment := range data.Shipments {
+		if shipment.WeightKg > 20 && shipment.CostBreakdown.Insurance==0 {
+			fmt.Println("Risk Report : ",shipment.ShipmentID)
+		}
+	}
+}
+func groupByCountry(data LogisticsData) {
+	summary := make(map[string]map[string]int)
+	for _, shipment := range data.Shipments {
+		country := shipment.Destination.Country
+		status := shipment.Status
+		_, exists := summary[country]
+		if !exists {
+			summary[country] = make(map[string]int)
+		}
+
+		summary[country][status]++
+	}
+
+	fmt.Println(summary)
 }
 func main() {
 	file, err := os.ReadFile("shipping_data.json")
@@ -85,4 +168,9 @@ func main() {
 		panic(err)
 	}
 	shipments(logisticsData)
+	totalRevenue(logisticsData)
+	maximumRevenue(logisticsData)
+	longestTransit(logisticsData)
+	riskReport(logisticsData)
+	groupByCountry(logisticsData)
 }

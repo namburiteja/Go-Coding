@@ -1,0 +1,56 @@
+mysql -u root -p
+
+SHOW DATABASES;
+
+CREATE DATABASE learn;
+
+USE learn;
+
+CREATE TABLE employee (
+    Id INT PRIMARY KEY,
+    Name VARCHAR(20),
+    Age INT,
+    Salary int,
+    Team VARCHAR(20)
+);
+
+SHOW TABLES;
+
+INSERT INTO employee VALUES (1, 'Teja', 22, 75000.00, 'Backend');
+INSERT INTO employee
+VALUES
+(2, 'Ravi', 24, 65000.00, 'Frontend'),
+(3, 'Rahul', 25, 82000.00, 'DevOps'),
+(4, 'Kiran', 23, 70000.00, 'QA'),
+(5, 'Suresh', 26, 90000.00, 'Backend');
+
+SELECT * FROM employee;
+
+SELECT Name, Salary
+FROM employee;
+
+SELECT *
+FROM employee
+WHERE Salary > 70000;
+
+SELECT *
+FROM employee
+WHERE Salary > 70000;
+
+UPDATE employee
+SET Salary = 80000
+WHERE Id = 1;
+
+UPDATE employee
+SET Age = 23,
+    Team = 'Go Backend'
+WHERE Id = 1;
+
+DELETE FROM employee
+WHERE Id = 4;
+
+DELETE FROM employee
+WHERE Team = 'QA';
+
+SELECT COUNT(*)
+FROM employee;

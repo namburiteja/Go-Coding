@@ -1,0 +1,135 @@
+Query 1 
+SELECT DISTINCT manufacture_date FROM ev_vehicles;
+ALTER TABLE ev_vehicles ADD COLUMN manufacture_date_clean DATE;
+UPDATE ev_vehicles
+SET manufacture_date_clean =
+CASE
+    WHEN manufacture_date LIKE '____-__-__'
+        THEN STR_TO_DATE(manufacture_date, '%Y-%m-%d')
+
+    WHEN manufacture_date LIKE '__-__-____'
+        THEN STR_TO_DATE(manufacture_date, '%m-%d-%Y')
+
+    WHEN manufacture_date LIKE '__/__/____'
+        THEN STR_TO_DATE(manufacture_date, '%d/%m/%Y')
+END;
+SELECT
+    manufacture_date,
+    manufacture_date_clean
+FROM ev_vehicles
+LIMIT 20;
+SELECT
+    company_name,
+    model_name,
+    manufacture_date_clean,
+    price_usd,
+    region_sold
+FROM ev_vehicles
+WHERE manufacture_date_clean > '2024-01-01'
+ORDER BY manufacture_date_clean;
+
+QUERY 2
+
+SELECT
+    company_name,
+    AVG(range_km) AS average_range_km
+FROM ev_vehicles
+GROUP BY company_name
+ORDER BY average_range_km DESC;
+
+
+QUERY 3
+
+SELECT *
+FROM ev_vehicles
+WHERE warranty_years IS NULL
+   OR odometer_km IS NULL
+   OR is_certified_pre_owned IS NULL;
+   
+SELECT
+    COUNT(*) AS total_rows,
+    SUM(warranty_years IS NULL) AS missing_warranty,
+    SUM(odometer_km IS NULL) AS missing_odometer,
+    SUM(is_certified_pre_owned IS NULL) AS missing_certified
+FROM ev_vehicles;
+
+SELECT ROUND(AVG(warranty_years)) AS avg_warranty
+FROM ev_vehicles;
+
+SET SQL_SAFE_UPDATES = 0;
+UPDATE ev_vehicles
+SET warranty_years =
+(
+    SELECT avg_warranty
+    FROM
+    (
+        SELECT ROUND(AVG(warranty_years)) AS avg_warranty
+        FROM ev_vehicles
+    ) AS temp
+)
+WHERE warranty_years IS NULL;
+
+SELECT ROUND(AVG(odometer_km)) AS avg_odometer
+FROM ev_vehicles;
+
+UPDATE ev_vehicles
+SET odometer_km =
+(
+    SELECT avg_odometer
+    FROM
+    (
+        SELECT ROUND(AVG(odometer_km)) AS avg_odometer
+        FROM ev_vehicles
+    ) AS temp
+)
+WHERE odometer_km IS NULL;
+
+SELECT
+    is_certified_pre_owned,
+    COUNT(*) AS total
+FROM ev_vehicles
+GROUP BY is_certified_pre_owned
+ORDER BY total DESC;
+
+UPDATE ev_vehicles
+SET is_certified_pre_owned = 'No'
+WHERE is_certified_pre_owned IS NULL;
+
+SELECT
+    SUM(warranty_years IS NULL) AS missing_warranty,
+    SUM(odometer_km IS NULL) AS missing_odometer,
+    SUM(is_certified_pre_owned IS NULL) AS missing_certified
+FROM ev_vehicles;
+
+QUERY 4
+
+SELECT
+    company_name,
+    model_name,
+    battery_chemistry,
+    price_usd,
+    region_sold,
+    range_km
+FROM ev_vehicles
+WHERE battery_chemistry = 'LFP'
+  AND price_usd < 50000
+  AND region_sold IN ('India', 'Asia Pacific');
+
+  QUERY 5
+
+  SELECT
+    company_name,
+    model_name,
+    price_usd,
+    battery_capacity_kwh,
+    range_km,
+
+    ROUND(price_usd / battery_capacity_kwh, 2) AS price_per_kwh,
+
+    ROUND(price_usd / range_km, 2) AS price_per_km_range
+
+FROM ev_vehicles
+
+ORDER BY price_per_km_range ASC
+
+LIMIT 5;

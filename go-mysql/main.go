@@ -16,10 +16,10 @@ func insertEmployee(db *sql.DB) {
 
 	result, err := db.Exec(
 		query,
-		"Teja",
-		22,
-		75000,
-		"Backend",
+		"Sai",
+		21,
+		50000,
+		"Ai/Ml",
 	)
 
 	if err != nil {
@@ -133,7 +133,7 @@ func main() {
 
 	// insertEmployee(db)
 	// getEmployees(db)
-	// updateEmployee(db, 3)
-	deleteEmployee(db, 3)
+	// updateEmployee(db, 4)
+	// deleteEmployee(db, 3)
 
 }

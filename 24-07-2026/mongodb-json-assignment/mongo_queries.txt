@@ -1,0 +1,133 @@
+QUERY 1 
+
+db.shipments.find(
+{
+    status:{
+        $in:["Delayed","Customs Hold"]
+    }
+})
+.sort({
+    estimated_delivery:1
+})
+
+
+QUERY 2
+
+db.shipments.aggregate([
+{
+    $group:{
+        _id:"$carrier",
+        totalRevenue:{
+            $sum:"$cost_breakdown.total"
+        }
+    }
+},
+{
+    $sort:{
+        totalRevenue:-1
+    }
+}
+])
+
+
+QUERY 3
+
+db.shipments.aggregate([
+{
+    $project:{
+        shipment_id:1,
+        transitHours:{
+            $divide:[
+                {
+                    $subtract:[
+                        {
+                            $toDate:{
+                                $arrayElemAt:[
+                                    "$tracking_events.timestamp",
+                                    -1
+                                ]
+                            }
+                        },
+                        {
+                            $toDate:{
+                                $arrayElemAt:[
+                                    "$tracking_events.timestamp",
+                                    0
+                                ]
+                            }
+                        }
+                    ]
+                },
+                1000*60*60
+            ]
+        }
+    }
+},
+{
+    $sort:{
+        transitHours:-1
+    }
+},
+{
+    $limit:1
+}
+])
+
+
+QUERY 4 
+
+db.shipments.find(
+{
+    is_international:true,
+    weight_kg:{
+        $gt:20
+    },
+    "cost_breakdown.insurance":0
+},
+{
+    shipment_id:1,
+    carrier:1,
+    weight_kg:1,
+    destination:1,
+    _id:0
+})
+
+
+QUERY 5 
+
+db.shipments.aggregate([
+
+{
+    $group:{
+        _id:{
+            country:"$destination.country",
+            status:"$status"
+        },
+        count:{
+            $sum:1
+        }
+    }
+},
+
+{
+    $group:{
+        _id:"$_id.country",
+        statuses:{
+            $push:{
+                k:"$_id.status",
+                v:"$count"
+            }
+        }
+    }
+},
+
+{
+    $project:{
+        _id:0,
+        country:"$_id",
+        statusCounts:{
+            $arrayToObject:"$statuses"
+        }
+    }
+}
+])

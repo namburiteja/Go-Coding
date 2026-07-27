@@ -5,9 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-
 	"go-sqlc/generated"
-
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -68,9 +66,7 @@ func createEmployee(ctx context.Context, queries *generated.Queries) {
 	fmt.Println("✅ Employee Inserted Successfully")
 }
 
-// -------------------------------------------------------
-// READ ALL
-// -------------------------------------------------------
+
 
 func getEmployees(ctx context.Context, queries *generated.Queries) {
 
@@ -94,9 +90,7 @@ func getEmployees(ctx context.Context, queries *generated.Queries) {
 	}
 }
 
-// -------------------------------------------------------
-// READ ONE
-// -------------------------------------------------------
+
 
 func getEmployee(ctx context.Context, queries *generated.Queries, id int32) {
 
@@ -117,9 +111,7 @@ func getEmployee(ctx context.Context, queries *generated.Queries, id int32) {
 	)
 }
 
-// -------------------------------------------------------
-// UPDATE
-// -------------------------------------------------------
+
 
 func updateEmployee(ctx context.Context, queries *generated.Queries) {
 
@@ -136,9 +128,7 @@ func updateEmployee(ctx context.Context, queries *generated.Queries) {
 	fmt.Println("✅ Employee Updated Successfully")
 }
 
-// -------------------------------------------------------
-// DELETE
-// -------------------------------------------------------
+
 
 func deleteEmployee(ctx context.Context, queries *generated.Queries, id int32) {
 

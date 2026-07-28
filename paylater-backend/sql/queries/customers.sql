@@ -1,0 +1,35 @@
+-- name: CreateCustomer :execresult
+INSERT INTO customers (
+    name,
+    email
+)
+VALUES (
+    ?,
+    ?
+);
+
+-- name: GetCustomerByID :one
+SELECT *
+FROM customers
+WHERE id = ?;
+
+-- name: GetAllCustomers :many
+SELECT * 
+FROM customers;
+
+-- name: UpdateCustomer :exec
+UPDATE customers
+SET
+    name = ?,
+    email = ?
+WHERE id = ?;
+
+-- name: UpdateCustomerDue :exec
+UPDATE customers
+SET total_due = ?
+WHERE id = ?;
+
+-- name: DeleteCustomerById :exec
+DELETE
+FROM customers
+WHERE id = ?;

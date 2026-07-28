@@ -1,4 +1,4 @@
--- name: CreateEmployee :execresult
+-- name: CreateEmployee :exec
 INSERT INTO employee (
     name,
     age,

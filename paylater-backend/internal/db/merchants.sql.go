@@ -26,10 +26,10 @@ VALUES (
 `
 
 type CreateMerchantParams struct {
-	Name                 string
-	Email                string
-	Phone                sql.NullString
-	CommissionPercentage string
+	Name                 string `json:"name"`
+	Email                string `json:"email"`
+	Phone                string `json:"phone"`
+	CommissionPercentage string `json:"commission_percentage"`
 }
 
 func (q *Queries) CreateMerchant(ctx context.Context, arg CreateMerchantParams) (sql.Result, error) {
@@ -39,6 +39,17 @@ func (q *Queries) CreateMerchant(ctx context.Context, arg CreateMerchantParams) 
 		arg.Phone,
 		arg.CommissionPercentage,
 	)
+}
+
+const deleteMerchantById = `-- name: DeleteMerchantById :exec
+DELETE
+FROM merchants
+WHERE id = ?
+`
+
+func (q *Queries) DeleteMerchantById(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteMerchantById, id)
+	return err
 }
 
 const getAllMerchants = `-- name: GetAllMerchants :many
@@ -94,6 +105,23 @@ func (q *Queries) GetMerchantByID(ctx context.Context, id int32) (Merchant, erro
 	return i, err
 }
 
+const updateMerchant = `-- name: UpdateMerchant :exec
+UPDATE merchants
+SET name = ?,email = ?
+WHERE id = ?
+`
+
+type UpdateMerchantParams struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	ID    int32  `json:"id"`
+}
+
+func (q *Queries) UpdateMerchant(ctx context.Context, arg UpdateMerchantParams) error {
+	_, err := q.db.ExecContext(ctx, updateMerchant, arg.Name, arg.Email, arg.ID)
+	return err
+}
+
 const updateMerchantCommission = `-- name: UpdateMerchantCommission :exec
 UPDATE merchants
 SET commission_percentage = ?
@@ -101,8 +129,8 @@ WHERE id = ?
 `
 
 type UpdateMerchantCommissionParams struct {
-	CommissionPercentage string
-	ID                   int32
+	CommissionPercentage string `json:"commission_percentage"`
+	ID                   int32  `json:"id"`
 }
 
 func (q *Queries) UpdateMerchantCommission(ctx context.Context, arg UpdateMerchantCommissionParams) error {

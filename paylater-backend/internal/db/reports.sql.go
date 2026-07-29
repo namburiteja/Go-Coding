@@ -11,14 +11,21 @@ import (
 )
 
 const getAllMerchantsFeeCollected = `-- name: GetAllMerchantsFeeCollected :many
-SELECT merchant_id,SUM(commission_amount) AS amount
-FROM transactions
-GROUP BY merchant_id
+SELECT
+    m.id,
+    m.name,
+    COALESCE(SUM(t.commission_amount), 0) AS total_fee_collected
+FROM merchants m
+LEFT JOIN transactions t
+    ON m.id = t.merchant_id
+GROUP BY m.id, m.name
+ORDER BY total_fee_collected DESC
 `
 
 type GetAllMerchantsFeeCollectedRow struct {
-	MerchantID sql.NullInt32
-	Amount     interface{}
+	ID                int32       `json:"id"`
+	Name              string      `json:"name"`
+	TotalFeeCollected interface{} `json:"total_fee_collected"`
 }
 
 func (q *Queries) GetAllMerchantsFeeCollected(ctx context.Context) ([]GetAllMerchantsFeeCollectedRow, error) {
@@ -30,7 +37,7 @@ func (q *Queries) GetAllMerchantsFeeCollected(ctx context.Context) ([]GetAllMerc
 	var items []GetAllMerchantsFeeCollectedRow
 	for rows.Next() {
 		var i GetAllMerchantsFeeCollectedRow
-		if err := rows.Scan(&i.MerchantID, &i.Amount); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name, &i.TotalFeeCollected); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -108,19 +115,6 @@ func (q *Queries) GetCustomersWithDue(ctx context.Context) ([]Customer, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const getMerchantFeeCollected = `-- name: GetMerchantFeeCollected :one
-SELECT COALESCE(SUM(commission_amount), 0)
-FROM transactions
-WHERE merchant_id = ?
-`
-
-func (q *Queries) GetMerchantFeeCollected(ctx context.Context, merchantID sql.NullInt32) (interface{}, error) {
-	row := q.db.QueryRowContext(ctx, getMerchantFeeCollected, merchantID)
-	var coalesce interface{}
-	err := row.Scan(&coalesce)
-	return coalesce, err
 }
 
 const getUsersAtCreditLimit = `-- name: GetUsersAtCreditLimit :many

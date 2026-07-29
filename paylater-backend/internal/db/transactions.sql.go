@@ -32,12 +32,12 @@ VALUES (
 `
 
 type CreateTransactionParams struct {
-	CustomerID           int32
-	MerchantID           sql.NullInt32
-	TransactionType      TransactionsTransactionType
-	Amount               string
-	CommissionPercentage sql.NullString
-	CommissionAmount     sql.NullString
+	CustomerID           int32                       `json:"customer_id"`
+	MerchantID           sql.NullInt32               `json:"merchant_id"`
+	TransactionType      TransactionsTransactionType `json:"transaction_type"`
+	Amount               string                      `json:"amount"`
+	CommissionPercentage sql.NullString              `json:"commission_percentage"`
+	CommissionAmount     sql.NullString              `json:"commission_amount"`
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (sql.Result, error) {

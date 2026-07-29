@@ -22,12 +22,28 @@ VALUES (
 `
 
 type CreateCustomerParams struct {
-	Name  string
-	Email string
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createCustomer, arg.Name, arg.Email)
+}
+
+const decreaseCustomerDue = `-- name: DecreaseCustomerDue :exec
+UPDATE customers
+SET total_due = total_due - ?
+WHERE id = ?
+`
+
+type DecreaseCustomerDueParams struct {
+	TotalDue sql.NullString `json:"total_due"`
+	ID       int32          `json:"id"`
+}
+
+func (q *Queries) DecreaseCustomerDue(ctx context.Context, arg DecreaseCustomerDueParams) error {
+	_, err := q.db.ExecContext(ctx, decreaseCustomerDue, arg.TotalDue, arg.ID)
+	return err
 }
 
 const deleteCustomerById = `-- name: DeleteCustomerById :exec
@@ -96,6 +112,22 @@ func (q *Queries) GetCustomerByID(ctx context.Context, id int32) (Customer, erro
 	return i, err
 }
 
+const increaseCustomerDue = `-- name: IncreaseCustomerDue :exec
+UPDATE customers
+SET total_due = total_due + ?
+WHERE id = ?
+`
+
+type IncreaseCustomerDueParams struct {
+	TotalDue sql.NullString `json:"total_due"`
+	ID       int32          `json:"id"`
+}
+
+func (q *Queries) IncreaseCustomerDue(ctx context.Context, arg IncreaseCustomerDueParams) error {
+	_, err := q.db.ExecContext(ctx, increaseCustomerDue, arg.TotalDue, arg.ID)
+	return err
+}
+
 const updateCustomer = `-- name: UpdateCustomer :exec
 UPDATE customers
 SET
@@ -105,9 +137,9 @@ WHERE id = ?
 `
 
 type UpdateCustomerParams struct {
-	Name  string
-	Email string
-	ID    int32
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	ID    int32  `json:"id"`
 }
 
 func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) error {
@@ -122,8 +154,8 @@ WHERE id = ?
 `
 
 type UpdateCustomerDueParams struct {
-	TotalDue sql.NullString
-	ID       int32
+	TotalDue sql.NullString `json:"total_due"`
+	ID       int32          `json:"id"`
 }
 
 func (q *Queries) UpdateCustomerDue(ctx context.Context, arg UpdateCustomerDueParams) error {

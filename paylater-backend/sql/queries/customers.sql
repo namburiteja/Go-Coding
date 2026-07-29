@@ -33,3 +33,23 @@ WHERE id = ?;
 DELETE
 FROM customers
 WHERE id = ?;
+
+
+
+
+
+
+
+
+
+
+-- name: IncreaseCustomerDue :exec
+UPDATE customers
+SET total_due = total_due + ?
+WHERE id = ?;
+
+-- name: DecreaseCustomerDue :exec
+UPDATE customers
+SET total_due = total_due - ?
+WHERE id = ?;
+

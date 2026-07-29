@@ -30,8 +30,8 @@ func (e *TransactionsTransactionType) Scan(src interface{}) error {
 }
 
 type NullTransactionsTransactionType struct {
-	TransactionsTransactionType TransactionsTransactionType
-	Valid                       bool // Valid is true if TransactionsTransactionType is not NULL
+	TransactionsTransactionType TransactionsTransactionType `json:"transactions_transaction_type"`
+	Valid                       bool                        `json:"valid"` // Valid is true if TransactionsTransactionType is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -53,29 +53,29 @@ func (ns NullTransactionsTransactionType) Value() (driver.Value, error) {
 }
 
 type Customer struct {
-	ID          int32
-	Name        string
-	Email       string
-	CreditLimit string
-	TotalDue    sql.NullString
-	CreatedAt   sql.NullTime
+	ID          int32          `json:"id"`
+	Name        string         `json:"name"`
+	Email       string         `json:"email"`
+	CreditLimit string         `json:"credit_limit"`
+	TotalDue    sql.NullString `json:"total_due"`
+	CreatedAt   sql.NullTime   `json:"created_at"`
 }
 
 type Merchant struct {
-	ID                   int32
-	Name                 string
-	Email                string
-	Phone                sql.NullString
-	CommissionPercentage string
+	ID                   int32  `json:"id"`
+	Name                 string `json:"name"`
+	Email                string `json:"email"`
+	Phone                string `json:"phone"`
+	CommissionPercentage string `json:"commission_percentage"`
 }
 
 type Transaction struct {
-	ID                   int32
-	CustomerID           int32
-	MerchantID           sql.NullInt32
-	TransactionType      TransactionsTransactionType
-	Amount               string
-	CommissionPercentage sql.NullString
-	CommissionAmount     sql.NullString
-	TransactionDate      sql.NullTime
+	ID                   int32                       `json:"id"`
+	CustomerID           int32                       `json:"customer_id"`
+	MerchantID           sql.NullInt32               `json:"merchant_id"`
+	TransactionType      TransactionsTransactionType `json:"transaction_type"`
+	Amount               string                      `json:"amount"`
+	CommissionPercentage sql.NullString              `json:"commission_percentage"`
+	CommissionAmount     sql.NullString              `json:"commission_amount"`
+	TransactionDate      sql.NullTime                `json:"transaction_date"`
 }

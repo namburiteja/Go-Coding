@@ -25,3 +25,13 @@ FROM merchants;
 UPDATE merchants
 SET commission_percentage = ?
 WHERE id = ?;
+
+-- name: UpdateMerchant :exec
+UPDATE merchants
+SET name = ?,email = ?
+WHERE id = ?;
+
+-- name: DeleteMerchantById :exec
+DELETE
+FROM merchants
+WHERE id = ?;

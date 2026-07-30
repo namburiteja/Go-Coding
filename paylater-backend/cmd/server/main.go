@@ -26,6 +26,7 @@ func main() {
 	merchantService := service.NewMerchantService(queries)
 	transactionService := service.NewTransactionService(queries)
 	reportService := service.NewReportService(queries)
+	adminService := service.NewAdminService(queries)
 
 
 	// Handlers
@@ -33,12 +34,13 @@ func main() {
 	merchantHandler := handler.NewMerchantHandler(merchantService)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 	reportHandler := handler.NewReportHandler(reportService)
+	adminHandler := handler.NewAdminHandler(adminService)
 
 	// Gin
 	router := gin.Default()
 
 	// Routes
-	routes.SetupRoutes(router, customerHandler, merchantHandler, transactionHandler, reportHandler)
+	routes.SetupRoutes(router, customerHandler, merchantHandler, transactionHandler, reportHandler, adminHandler)
 
 	log.Println("Server Started on :9090")
 

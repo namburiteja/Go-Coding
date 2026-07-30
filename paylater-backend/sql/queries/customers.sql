@@ -1,9 +1,11 @@
 -- name: CreateCustomer :execresult
 INSERT INTO customers (
     name,
-    email
+    email,
+    password
 )
 VALUES (
+    ?,
     ?,
     ?
 );
@@ -34,7 +36,10 @@ DELETE
 FROM customers
 WHERE id = ?;
 
-
+-- name: GetCustomerByEmail :one
+SELECT *
+FROM customers
+WHERE email = ?;
 
 
 

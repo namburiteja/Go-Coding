@@ -13,21 +13,24 @@ import (
 const createCustomer = `-- name: CreateCustomer :execresult
 INSERT INTO customers (
     name,
-    email
+    email,
+    password
 )
 VALUES (
+    ?,
     ?,
     ?
 )
 `
 
 type CreateCustomerParams struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createCustomer, arg.Name, arg.Email)
+	return q.db.ExecContext(ctx, createCustomer, arg.Name, arg.Email, arg.Password)
 }
 
 const decreaseCustomerDue = `-- name: DecreaseCustomerDue :exec
@@ -58,7 +61,7 @@ func (q *Queries) DeleteCustomerById(ctx context.Context, id int32) error {
 }
 
 const getAllCustomers = `-- name: GetAllCustomers :many
-SELECT id, name, email, credit_limit, total_due, created_at 
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at 
 FROM customers
 `
 
@@ -75,8 +78,11 @@ func (q *Queries) GetAllCustomers(ctx context.Context) ([]Customer, error) {
 			&i.ID,
 			&i.Name,
 			&i.Email,
+			&i.Password,
 			&i.CreditLimit,
 			&i.TotalDue,
+			&i.PaymentDueDate,
+			&i.Status,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -92,8 +98,31 @@ func (q *Queries) GetAllCustomers(ctx context.Context) ([]Customer, error) {
 	return items, nil
 }
 
+const getCustomerByEmail = `-- name: GetCustomerByEmail :one
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
+FROM customers
+WHERE email = ?
+`
+
+func (q *Queries) GetCustomerByEmail(ctx context.Context, email string) (Customer, error) {
+	row := q.db.QueryRowContext(ctx, getCustomerByEmail, email)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.CreditLimit,
+		&i.TotalDue,
+		&i.PaymentDueDate,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getCustomerByID = `-- name: GetCustomerByID :one
-SELECT id, name, email, credit_limit, total_due, created_at
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
 FROM customers
 WHERE id = ?
 `
@@ -105,8 +134,11 @@ func (q *Queries) GetCustomerByID(ctx context.Context, id int32) (Customer, erro
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.Password,
 		&i.CreditLimit,
 		&i.TotalDue,
+		&i.PaymentDueDate,
+		&i.Status,
 		&i.CreatedAt,
 	)
 	return i, err

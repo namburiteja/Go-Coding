@@ -81,7 +81,7 @@ func (q *Queries) GetCustomerDueByName(ctx context.Context, name string) ([]sql.
 }
 
 const getCustomersWithDue = `-- name: GetCustomersWithDue :many
-SELECT id, name, email, credit_limit, total_due, created_at
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
 FROM customers
 WHERE total_due > 0
 ORDER BY total_due DESC
@@ -100,8 +100,11 @@ func (q *Queries) GetCustomersWithDue(ctx context.Context) ([]Customer, error) {
 			&i.ID,
 			&i.Name,
 			&i.Email,
+			&i.Password,
 			&i.CreditLimit,
 			&i.TotalDue,
+			&i.PaymentDueDate,
+			&i.Status,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -118,7 +121,7 @@ func (q *Queries) GetCustomersWithDue(ctx context.Context) ([]Customer, error) {
 }
 
 const getUsersAtCreditLimit = `-- name: GetUsersAtCreditLimit :many
-SELECT id, name, email, credit_limit, total_due, created_at
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
 FROM customers
 WHERE total_due = credit_limit
 `
@@ -136,8 +139,11 @@ func (q *Queries) GetUsersAtCreditLimit(ctx context.Context) ([]Customer, error)
 			&i.ID,
 			&i.Name,
 			&i.Email,
+			&i.Password,
 			&i.CreditLimit,
 			&i.TotalDue,
+			&i.PaymentDueDate,
+			&i.Status,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

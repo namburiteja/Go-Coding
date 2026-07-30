@@ -12,6 +12,7 @@ func SetupRoutes(
 	merchantHandler *handler.MerchantHandler,
 	transactionHandler *handler.TransactionHandler,
 	reportHandler *handler.ReportHandler,
+	adminHandler *handler.AdminHandler,
 ) {
 
 	// Customer Routes
@@ -38,11 +39,18 @@ func SetupRoutes(
 	report := router.Group("/reports")
 	{
 		report.GET("/credit-limit", reportHandler.GetUsersAtCreditLimit)
-
 		report.GET("/customers-due", reportHandler.GetCustomersWithDue)
-
 		report.GET("/customer-due/:name", reportHandler.GetCustomerDueByName)
-
 		report.GET("/merchant-fees", reportHandler.GetAllMerchantsFeeCollected)
 	}
+
+	admins := router.Group("/admins")
+	{
+		admins.POST("", adminHandler.CreateAdmin)
+		admins.GET("", adminHandler.GetAllAdmins)
+		admins.GET("/:id", adminHandler.GetAdminByID)
+		admins.PUT("/:id", adminHandler.UpdateAdmin)
+		admins.DELETE("/:id", adminHandler.DeleteAdminByID)
+	}
+
 }

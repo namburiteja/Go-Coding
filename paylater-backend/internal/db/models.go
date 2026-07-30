@@ -10,6 +10,48 @@ import (
 	"fmt"
 )
 
+type CustomersStatus string
+
+const (
+	CustomersStatusACTIVE  CustomersStatus = "ACTIVE"
+	CustomersStatusBLOCKED CustomersStatus = "BLOCKED"
+)
+
+func (e *CustomersStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CustomersStatus(s)
+	case string:
+		*e = CustomersStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CustomersStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCustomersStatus struct {
+	CustomersStatus CustomersStatus `json:"customers_status"`
+	Valid           bool            `json:"valid"` // Valid is true if CustomersStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCustomersStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CustomersStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CustomersStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCustomersStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CustomersStatus), nil
+}
+
 type TransactionsTransactionType string
 
 const (
@@ -52,21 +94,34 @@ func (ns NullTransactionsTransactionType) Value() (driver.Value, error) {
 	return string(ns.TransactionsTransactionType), nil
 }
 
+type Admin struct {
+	ID        int32        `json:"id"`
+	Name      string       `json:"name"`
+	Email     string       `json:"email"`
+	Password  string       `json:"password"`
+	CreatedAt sql.NullTime `json:"created_at"`
+}
+
 type Customer struct {
-	ID          int32          `json:"id"`
-	Name        string         `json:"name"`
-	Email       string         `json:"email"`
-	CreditLimit string         `json:"credit_limit"`
-	TotalDue    sql.NullString `json:"total_due"`
-	CreatedAt   sql.NullTime   `json:"created_at"`
+	ID             int32               `json:"id"`
+	Name           string              `json:"name"`
+	Email          string              `json:"email"`
+	Password       string              `json:"password"`
+	CreditLimit    string              `json:"credit_limit"`
+	TotalDue       sql.NullString      `json:"total_due"`
+	PaymentDueDate sql.NullTime        `json:"payment_due_date"`
+	Status         NullCustomersStatus `json:"status"`
+	CreatedAt      sql.NullTime        `json:"created_at"`
 }
 
 type Merchant struct {
-	ID                   int32  `json:"id"`
-	Name                 string `json:"name"`
-	Email                string `json:"email"`
-	Phone                string `json:"phone"`
-	CommissionPercentage string `json:"commission_percentage"`
+	ID                   int32        `json:"id"`
+	Name                 string       `json:"name"`
+	Email                string       `json:"email"`
+	Password             string       `json:"password"`
+	Phone                string       `json:"phone"`
+	CommissionPercentage string       `json:"commission_percentage"`
+	CreatedAt            sql.NullTime `json:"created_at"`
 }
 
 type Transaction struct {

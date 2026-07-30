@@ -14,10 +14,12 @@ const createMerchant = `-- name: CreateMerchant :execresult
 INSERT INTO merchants (
     name,
     email,
+    password,
     phone,
     commission_percentage
 )
 VALUES (
+    ?,
     ?,
     ?,
     ?,
@@ -28,6 +30,7 @@ VALUES (
 type CreateMerchantParams struct {
 	Name                 string `json:"name"`
 	Email                string `json:"email"`
+	Password             string `json:"password"`
 	Phone                string `json:"phone"`
 	CommissionPercentage string `json:"commission_percentage"`
 }
@@ -36,6 +39,7 @@ func (q *Queries) CreateMerchant(ctx context.Context, arg CreateMerchantParams) 
 	return q.db.ExecContext(ctx, createMerchant,
 		arg.Name,
 		arg.Email,
+		arg.Password,
 		arg.Phone,
 		arg.CommissionPercentage,
 	)
@@ -53,7 +57,7 @@ func (q *Queries) DeleteMerchantById(ctx context.Context, id int32) error {
 }
 
 const getAllMerchants = `-- name: GetAllMerchants :many
-SELECT id, name, email, phone, commission_percentage
+SELECT id, name, email, password, phone, commission_percentage, created_at
 FROM merchants
 `
 
@@ -70,8 +74,10 @@ func (q *Queries) GetAllMerchants(ctx context.Context) ([]Merchant, error) {
 			&i.ID,
 			&i.Name,
 			&i.Email,
+			&i.Password,
 			&i.Phone,
 			&i.CommissionPercentage,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -86,8 +92,29 @@ func (q *Queries) GetAllMerchants(ctx context.Context) ([]Merchant, error) {
 	return items, nil
 }
 
+const getMerchantByEmail = `-- name: GetMerchantByEmail :one
+SELECT id, name, email, password, phone, commission_percentage, created_at
+FROM merchants
+WHERE email = ?
+`
+
+func (q *Queries) GetMerchantByEmail(ctx context.Context, email string) (Merchant, error) {
+	row := q.db.QueryRowContext(ctx, getMerchantByEmail, email)
+	var i Merchant
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.Phone,
+		&i.CommissionPercentage,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getMerchantByID = `-- name: GetMerchantByID :one
-SELECT id, name, email, phone, commission_percentage
+SELECT id, name, email, password, phone, commission_percentage, created_at
 FROM merchants
 WHERE id = ?
 `
@@ -99,8 +126,10 @@ func (q *Queries) GetMerchantByID(ctx context.Context, id int32) (Merchant, erro
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.Password,
 		&i.Phone,
 		&i.CommissionPercentage,
+		&i.CreatedAt,
 	)
 	return i, err
 }

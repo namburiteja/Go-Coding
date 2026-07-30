@@ -2,10 +2,12 @@
 INSERT INTO merchants (
     name,
     email,
+    password,
     phone,
     commission_percentage
 )
 VALUES (
+    ?,
     ?,
     ?,
     ?,
@@ -35,3 +37,8 @@ WHERE id = ?;
 DELETE
 FROM merchants
 WHERE id = ?;
+
+-- name: GetMerchantByEmail :one
+SELECT *
+FROM merchants
+WHERE email = ?;

@@ -9,9 +9,12 @@ import (
 	"paylater-backend/internal/handler"
 	"paylater-backend/internal/routes"
 	"github.com/gin-gonic/gin"
+	"paylater-backend/internal/config"
 )
 
 func main() {
+
+	config.LoadEnv()
 
 	// Connect to MySQL
 	conn, err := database.NewMySQLConnection() // this helps to conn in internal/database/mysql.go

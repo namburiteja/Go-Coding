@@ -2,9 +2,11 @@
 INSERT INTO customers (
     name,
     email,
-    password
+    password,
+    payment_due_date
 )
 VALUES (
+    ?,
     ?,
     ?,
     ?
@@ -42,12 +44,6 @@ FROM customers
 WHERE email = ?;
 
 
-
-
-
-
-
-
 -- name: IncreaseCustomerDue :exec
 UPDATE customers
 SET total_due = total_due + ?
@@ -58,3 +54,13 @@ UPDATE customers
 SET total_due = total_due - ?
 WHERE id = ?;
 
+-- name: UpdateCustomerStatus :exec
+UPDATE customers
+SET status = ?
+WHERE id = ?;
+
+-- name: GetCustomerByIDForUpdate :one
+SELECT *
+FROM customers
+WHERE id = ?
+LIMIT 1;

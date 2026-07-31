@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"strconv"
+	"time"
 	"fmt"
 	db "paylater-backend/internal/db"
+	"paylater-backend/internal/dto"
 )
 
 type TransactionService struct {
@@ -19,6 +21,44 @@ func NewTransactionService(queries *db.Queries) *TransactionService {
 	}
 }
 
+func (s *TransactionService) Purchase(
+	ctx context.Context,
+	customerID int32,
+	req dto.PurchaseRequest,
+) error {
+
+	params := db.CreateTransactionParams{
+		CustomerID: customerID,
+
+		MerchantID: sql.NullInt32{
+			Int32: req.MerchantID,
+			Valid: true,
+		},
+
+		TransactionType: db.TransactionsTransactionTypePURCHASE,
+
+		Amount: req.Amount,
+	}
+
+	return s.CreateTransaction(ctx, params)
+}
+func (s *TransactionService) Payback(
+	ctx context.Context,
+	customerID int32,
+	req dto.PaybackRequest,
+) error {
+
+	params := db.CreateTransactionParams{
+		CustomerID: customerID,
+
+		TransactionType: db.TransactionsTransactionTypePAYBACK,
+
+		Amount: req.Amount,
+	}
+
+	return s.CreateTransaction(ctx, params)
+}
+
 func (s *TransactionService) CreateTransaction(ctx context.Context, arg db.CreateTransactionParams) error {
 
 	// Get Customer
@@ -27,10 +67,22 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, arg db.Creat
 		return errors.New("customer not found")
 	}
 
+	// Customer Status Check
+	if customer.Status.Valid &&
+		customer.Status.CustomersStatus == db.CustomersStatusBLOCKED {
+
+		return errors.New("customer is blocked")
+	}
+
 	// Convert Amount
 	amount, err := strconv.ParseFloat(arg.Amount, 64)
 	if err != nil {
 		return errors.New("invalid amount")
+	}
+
+	// Amount Validation
+	if amount <= 0 {
+		return errors.New("amount must be greater than zero")
 	}
 
 	// Convert Credit Limit
@@ -53,12 +105,32 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, arg db.Creat
 
 	case db.TransactionsTransactionTypePURCHASE:
 
+		// Due Date Check
+		if time.Now().After(customer.PaymentDueDate) {
+
+			err := s.queries.UpdateCustomerStatus(
+				ctx,
+				db.UpdateCustomerStatusParams{
+					ID: customer.ID,
+					Status: db.NullCustomersStatus{
+						CustomersStatus: db.CustomersStatusBLOCKED,
+						Valid:           true,
+					},
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return errors.New("payment due date crossed, customer has been blocked")
+		}
+
 		// Merchant Required
 		if !arg.MerchantID.Valid {
 			return errors.New("merchant id required")
 		}
 
-		// Merchant Exists?
+		// Merchant Exists
 		merchant, err := s.queries.GetMerchantByID(ctx, arg.MerchantID.Int32)
 		if err != nil {
 			return errors.New("merchant not found")
@@ -69,18 +141,22 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, arg db.Creat
 			return errors.New("credit limit exceeded")
 		}
 
-		// Commission %
-		commissionPercentage, err := strconv.ParseFloat(merchant.CommissionPercentage, 64)
-		if err != nil {
-			return err
+		// Commission Percentage
+		commissionPercentage := 0.0
+
+		if merchant.CommissionPercentage.Valid {
+			commissionPercentage, err = strconv.ParseFloat(
+				merchant.CommissionPercentage.String,
+				64,
+			)
+			if err != nil {
+				return err
+			}
 		}
 
 		commissionAmount := (amount * commissionPercentage) / 100
 
-		arg.CommissionPercentage = sql.NullString{
-			String: merchant.CommissionPercentage,
-			Valid:  true,
-		}
+		arg.CommissionPercentage = merchant.CommissionPercentage
 
 		arg.CommissionAmount = sql.NullString{
 			String: fmt.Sprintf("%.2f", commissionAmount),
@@ -93,7 +169,7 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, arg db.Creat
 			return err
 		}
 
-		// Update Due
+		// Update Customer Due
 		newDue := currentDue + amount
 
 		return s.queries.UpdateCustomerDue(ctx, db.UpdateCustomerDueParams{
@@ -105,6 +181,11 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, arg db.Creat
 		})
 
 	case db.TransactionsTransactionTypePAYBACK:
+
+		// No Due
+		if currentDue == 0 {
+			return errors.New("customer has no outstanding due")
+		}
 
 		// Cannot Pay More Than Due
 		if amount > currentDue {

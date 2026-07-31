@@ -11,7 +11,7 @@ CREATE TABLE customers (
 
     total_due DECIMAL(10,2) DEFAULT 0,
 
-    payment_due_date DATE ,
+    payment_due_date DATE NOT NULL,
 
     status ENUM(
         'ACTIVE',

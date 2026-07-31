@@ -4,6 +4,6 @@ CREATE TABLE merchants (
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20) NOT NULL,
-    commission_percentage DECIMAL(5,2) NOT NULL,
+    commission_percentage DECIMAL(5,2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

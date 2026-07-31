@@ -6,6 +6,7 @@ import (
 
 	db "paylater-backend/internal/db"
 	"paylater-backend/internal/service"
+	"paylater-backend/internal/dto"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,9 +21,11 @@ func NewAdminHandler(service *service.AdminService) *AdminHandler {
 	}
 }
 
-// POST /admins
-func (h *AdminHandler) CreateAdmin(c *gin.Context) {
-	var req db.CreateAdminParams
+
+// POST /admins/register
+func (h *AdminHandler) RegisterAdmin(c *gin.Context) {
+
+	var req dto.AdminRegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -31,16 +34,41 @@ func (h *AdminHandler) CreateAdmin(c *gin.Context) {
 		return
 	}
 
-	err := h.service.CreateAdmin(c.Request.Context(), req)
+	err := h.service.RegisterAdmin(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Admin created successfully",
+		"message": "Admin registered successfully",
+	})
+}
+
+// POST /admins/login
+func (h *AdminHandler) LoginAdmin(c *gin.Context) {
+
+	var req dto.AdminLoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	token, err := h.service.LoginAdmin(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.AdminLoginResponse{
+		Token: token,
 	})
 }
 

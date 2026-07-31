@@ -2,8 +2,15 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"time"
 
 	db "paylater-backend/internal/db"
+	"paylater-backend/internal/auth"
+	"paylater-backend/internal/dto"
+	"paylater-backend/internal/utils"
+
 )
 
 type CustomerService struct {
@@ -16,20 +23,76 @@ func NewCustomerService(queries *db.Queries) *CustomerService {
 	}
 }
 
-func (s *CustomerService) CreateCustomer(ctx context.Context, arg db.CreateCustomerParams) error {
+func (s *CustomerService) RegisterCustomer(ctx context.Context, req dto.CustomerRegisterRequest) error {
 
-	// Business logic will come here later
-	// Example:
-	// 1. Check email already exists
-	// 2. Validate credit limit
-	// 3. Other business validations
+	_, err := s.queries.GetCustomerByEmail(ctx, req.Email)
 
-	_, err := s.queries.CreateCustomer(ctx, arg)
+	if err == nil {
+		return errors.New("customer already exists")
+	}
+
+	if err != sql.ErrNoRows {
+		return err
+	}
+
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		return err
+	}
+
+	dueDate := utils.CalculatePaymentDueDate(time.Now())
+
+	_, err = s.queries.CreateCustomer(ctx, db.CreateCustomerParams{
+		Name:           req.Name,
+		Email:          req.Email,
+		Password:       hashedPassword,
+		PaymentDueDate: dueDate,
+	})
+
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *CustomerService) LoginCustomer(ctx context.Context, req dto.CustomerLoginRequest) (string, error) {
+
+	customer, err := s.queries.GetCustomerByEmail(ctx, req.Email)
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	err = auth.ComparePassword(customer.Password, req.Password)
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	token, err := auth.GenerateJWT(customer.ID, auth.RoleCustomer)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func (s *CustomerService) GetMyProfile(
+	ctx context.Context,
+	customerID int32,
+) (db.Customer, error) {
+
+	return s.queries.GetCustomerByID(ctx, customerID)
+}
+
+func (s *CustomerService) UpdateMyProfile(
+	ctx context.Context,
+	customerID int32,
+	req db.UpdateCustomerParams,
+) error {
+
+	req.ID = customerID
+
+	return s.queries.UpdateCustomer(ctx, req)
 }
 
 // Get Customer By ID

@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"net/http"
 	"strconv"
-	"fmt"
 
 	db "paylater-backend/internal/db"
 	"paylater-backend/internal/service"
+	"paylater-backend/internal/dto"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,9 +23,9 @@ func NewMerchantHandler(service *service.MerchantService) *MerchantHandler {
 }
 
 // Create Merchant
-func (h *MerchantHandler) CreateMerchant(c *gin.Context) {
+func (h *MerchantHandler) RegisterMerchant(c *gin.Context) {
 
-	var req db.CreateMerchantParams
+	var req dto.MerchantRegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -33,9 +33,54 @@ func (h *MerchantHandler) CreateMerchant(c *gin.Context) {
 		})
 		return
 	}
-	fmt.Printf("%+v\n", req)
 
-	err := h.service.CreateMerchant(c, req)
+	err := h.service.RegisterMerchant(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Merchant registered successfully",
+	})
+}
+
+//login merchant
+func (h *MerchantHandler) LoginMerchant(c *gin.Context) {
+
+	var req dto.MerchantLoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	token, err := h.service.LoginMerchant(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.MerchantLoginResponse{
+		Token: token,
+	})
+}
+
+func (h *MerchantHandler) GetMyProfile(c *gin.Context) {
+
+	userID := c.MustGet("userID").(int32)
+
+	merchant, err := h.service.GetMyProfile(
+		c.Request.Context(),
+		userID,
+	)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -43,10 +88,41 @@ func (h *MerchantHandler) CreateMerchant(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Merchant Created Successfully",
+	c.JSON(http.StatusOK, merchant)
+}
+
+func (h *MerchantHandler) UpdateMyProfile(c *gin.Context) {
+
+	userID := c.MustGet("userID").(int32)
+
+	var req db.UpdateMerchantParams
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err := h.service.UpdateMyProfile(
+		c.Request.Context(),
+		userID,
+		req,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Profile updated successfully",
 	})
 }
+
+
 
 // Get Merchant By ID
 func (h *MerchantHandler) GetMerchantByID(c *gin.Context) {

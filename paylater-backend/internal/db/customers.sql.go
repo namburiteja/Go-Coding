@@ -8,15 +8,18 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const createCustomer = `-- name: CreateCustomer :execresult
 INSERT INTO customers (
     name,
     email,
-    password
+    password,
+    payment_due_date
 )
 VALUES (
+    ?,
     ?,
     ?,
     ?
@@ -24,13 +27,19 @@ VALUES (
 `
 
 type CreateCustomerParams struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name           string    `json:"name"`
+	Email          string    `json:"email"`
+	Password       string    `json:"password"`
+	PaymentDueDate time.Time `json:"payment_due_date"`
 }
 
 func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createCustomer, arg.Name, arg.Email, arg.Password)
+	return q.db.ExecContext(ctx, createCustomer,
+		arg.Name,
+		arg.Email,
+		arg.Password,
+		arg.PaymentDueDate,
+	)
 }
 
 const decreaseCustomerDue = `-- name: DecreaseCustomerDue :exec
@@ -144,6 +153,30 @@ func (q *Queries) GetCustomerByID(ctx context.Context, id int32) (Customer, erro
 	return i, err
 }
 
+const getCustomerByIDForUpdate = `-- name: GetCustomerByIDForUpdate :one
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
+FROM customers
+WHERE id = ?
+LIMIT 1
+`
+
+func (q *Queries) GetCustomerByIDForUpdate(ctx context.Context, id int32) (Customer, error) {
+	row := q.db.QueryRowContext(ctx, getCustomerByIDForUpdate, id)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.CreditLimit,
+		&i.TotalDue,
+		&i.PaymentDueDate,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const increaseCustomerDue = `-- name: IncreaseCustomerDue :exec
 UPDATE customers
 SET total_due = total_due + ?
@@ -192,5 +225,21 @@ type UpdateCustomerDueParams struct {
 
 func (q *Queries) UpdateCustomerDue(ctx context.Context, arg UpdateCustomerDueParams) error {
 	_, err := q.db.ExecContext(ctx, updateCustomerDue, arg.TotalDue, arg.ID)
+	return err
+}
+
+const updateCustomerStatus = `-- name: UpdateCustomerStatus :exec
+UPDATE customers
+SET status = ?
+WHERE id = ?
+`
+
+type UpdateCustomerStatusParams struct {
+	Status NullCustomersStatus `json:"status"`
+	ID     int32               `json:"id"`
+}
+
+func (q *Queries) UpdateCustomerStatus(ctx context.Context, arg UpdateCustomerStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateCustomerStatus, arg.Status, arg.ID)
 	return err
 }

@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"time"
 )
 
 type CustomersStatus string
@@ -109,19 +110,19 @@ type Customer struct {
 	Password       string              `json:"password"`
 	CreditLimit    string              `json:"credit_limit"`
 	TotalDue       sql.NullString      `json:"total_due"`
-	PaymentDueDate sql.NullTime        `json:"payment_due_date"`
+	PaymentDueDate time.Time           `json:"payment_due_date"`
 	Status         NullCustomersStatus `json:"status"`
 	CreatedAt      sql.NullTime        `json:"created_at"`
 }
 
 type Merchant struct {
-	ID                   int32        `json:"id"`
-	Name                 string       `json:"name"`
-	Email                string       `json:"email"`
-	Password             string       `json:"password"`
-	Phone                string       `json:"phone"`
-	CommissionPercentage string       `json:"commission_percentage"`
-	CreatedAt            sql.NullTime `json:"created_at"`
+	ID                   int32          `json:"id"`
+	Name                 string         `json:"name"`
+	Email                string         `json:"email"`
+	Password             string         `json:"password"`
+	Phone                string         `json:"phone"`
+	CommissionPercentage sql.NullString `json:"commission_percentage"`
+	CreatedAt            sql.NullTime   `json:"created_at"`
 }
 
 type Transaction struct {

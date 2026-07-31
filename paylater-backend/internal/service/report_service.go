@@ -28,7 +28,7 @@ func (s *ReportService) GetCustomersWithDue(ctx context.Context) ([]db.Customer,
 }
 
 // Customer due by name
-func (s *ReportService) GetCustomerDueByName(ctx context.Context, name string) ([]sql.NullString, error) {
+func (s *ReportService) GetCustomerDueByName(ctx context.Context,name string,) (db.Customer, error) {
 	return s.queries.GetCustomerDueByName(ctx, name)
 }
 

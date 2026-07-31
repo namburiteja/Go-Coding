@@ -3,11 +3,9 @@ INSERT INTO merchants (
     name,
     email,
     password,
-    phone,
-    commission_percentage
+    phone
 )
 VALUES (
-    ?,
     ?,
     ?,
     ?,

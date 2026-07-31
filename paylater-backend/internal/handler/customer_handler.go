@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	db "paylater-backend/internal/db"
 	"paylater-backend/internal/service"
+	"paylater-backend/internal/dto"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,11 +21,10 @@ func NewCustomerHandler(service *service.CustomerService) *CustomerHandler {
 	}
 }
 
-func (h *CustomerHandler) CreateCustomer(c *gin.Context) {
+func (h *CustomerHandler) RegisterCustomer(c *gin.Context) {
 
-	var req db.CreateCustomerParams
+	var req dto.CustomerRegisterRequest
 
-	// Read JSON Request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -32,8 +32,52 @@ func (h *CustomerHandler) CreateCustomer(c *gin.Context) {
 		return
 	}
 
-	// Call Service
-	err := h.service.CreateCustomer(c, req)
+	err := h.service.RegisterCustomer(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Customer registered successfully",
+	})
+}
+
+func (h *CustomerHandler) LoginCustomer(c *gin.Context) {
+
+	var req dto.CustomerLoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	token, err := h.service.LoginCustomer(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.CustomerLoginResponse{
+		Token: token,
+	})
+}
+
+func (h *CustomerHandler) GetMyProfile(c *gin.Context) {
+
+	userID := c.MustGet("userID").(int32)
+
+	customer, err := h.service.GetMyProfile(
+		c.Request.Context(),
+		userID,
+	)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -41,9 +85,37 @@ func (h *CustomerHandler) CreateCustomer(c *gin.Context) {
 		return
 	}
 
-	// Success Response
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Customer Created Successfully",
+	c.JSON(http.StatusOK, customer)
+}
+
+func (h *CustomerHandler) UpdateMyProfile(c *gin.Context) {
+
+	userID := c.MustGet("userID").(int32)
+
+	var req db.UpdateCustomerParams
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err := h.service.UpdateMyProfile(
+		c.Request.Context(),
+		userID,
+		req,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Profile updated successfully",
 	})
 }
 

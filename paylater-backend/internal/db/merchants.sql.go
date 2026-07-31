@@ -15,11 +15,9 @@ INSERT INTO merchants (
     name,
     email,
     password,
-    phone,
-    commission_percentage
+    phone
 )
 VALUES (
-    ?,
     ?,
     ?,
     ?,
@@ -28,11 +26,10 @@ VALUES (
 `
 
 type CreateMerchantParams struct {
-	Name                 string `json:"name"`
-	Email                string `json:"email"`
-	Password             string `json:"password"`
-	Phone                string `json:"phone"`
-	CommissionPercentage string `json:"commission_percentage"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Phone    string `json:"phone"`
 }
 
 func (q *Queries) CreateMerchant(ctx context.Context, arg CreateMerchantParams) (sql.Result, error) {
@@ -41,7 +38,6 @@ func (q *Queries) CreateMerchant(ctx context.Context, arg CreateMerchantParams) 
 		arg.Email,
 		arg.Password,
 		arg.Phone,
-		arg.CommissionPercentage,
 	)
 }
 
@@ -158,8 +154,8 @@ WHERE id = ?
 `
 
 type UpdateMerchantCommissionParams struct {
-	CommissionPercentage string `json:"commission_percentage"`
-	ID                   int32  `json:"id"`
+	CommissionPercentage sql.NullString `json:"commission_percentage"`
+	ID                   int32          `json:"id"`
 }
 
 func (q *Queries) UpdateMerchantCommission(ctx context.Context, arg UpdateMerchantCommissionParams) error {

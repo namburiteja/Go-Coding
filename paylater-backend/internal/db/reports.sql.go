@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const getAllMerchantsFeeCollected = `-- name: GetAllMerchantsFeeCollected :many
@@ -51,33 +50,28 @@ func (q *Queries) GetAllMerchantsFeeCollected(ctx context.Context) ([]GetAllMerc
 	return items, nil
 }
 
-const getCustomerDueByName = `-- name: GetCustomerDueByName :many
-SELECT total_due
+const getCustomerDueByName = `-- name: GetCustomerDueByName :one
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
 FROM customers
 WHERE name = ?
+LIMIT 1
 `
 
-func (q *Queries) GetCustomerDueByName(ctx context.Context, name string) ([]sql.NullString, error) {
-	rows, err := q.db.QueryContext(ctx, getCustomerDueByName, name)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []sql.NullString
-	for rows.Next() {
-		var total_due sql.NullString
-		if err := rows.Scan(&total_due); err != nil {
-			return nil, err
-		}
-		items = append(items, total_due)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetCustomerDueByName(ctx context.Context, name string) (Customer, error) {
+	row := q.db.QueryRowContext(ctx, getCustomerDueByName, name)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.CreditLimit,
+		&i.TotalDue,
+		&i.PaymentDueDate,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getCustomersWithDue = `-- name: GetCustomersWithDue :many
@@ -123,7 +117,7 @@ func (q *Queries) GetCustomersWithDue(ctx context.Context) ([]Customer, error) {
 const getUsersAtCreditLimit = `-- name: GetUsersAtCreditLimit :many
 SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
 FROM customers
-WHERE total_due = credit_limit
+WHERE total_due >= credit_limit
 `
 
 func (q *Queries) GetUsersAtCreditLimit(ctx context.Context) ([]Customer, error) {

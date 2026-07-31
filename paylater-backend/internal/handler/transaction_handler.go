@@ -6,7 +6,7 @@ import (
 	"strconv"
 	// "fmt"
 
-	db "paylater-backend/internal/db"
+	// db "paylater-backend/internal/db"
 	"paylater-backend/internal/service"
 	"paylater-backend/internal/dto"
 	"github.com/gin-gonic/gin"
@@ -22,9 +22,10 @@ func NewTransactionHandler(service *service.TransactionService) *TransactionHand
 	}
 }
 
-func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 
-	var req dto.CreateTransactionRequest
+func (h *TransactionHandler) Purchase(c *gin.Context) {
+
+	var req dto.PurchaseRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -33,22 +34,44 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 		return
 	}
 
-	params := db.CreateTransactionParams{
-		CustomerID:      req.CustomerID,
-		TransactionType: db.TransactionsTransactionType(req.TransactionType),
-		Amount:          req.Amount,
+	userID := c.MustGet("userID").(int32)
+
+	err := h.service.Purchase(
+		c.Request.Context(),
+		userID,
+		req,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
 	}
 
-	if req.MerchantID != nil {
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Purchase successful",
+	})
+}
 
-		params.MerchantID = sql.NullInt32{
-			Int32: *req.MerchantID,
-			Valid: true,
-		}
+func (h *TransactionHandler) Payback(c *gin.Context) {
 
+	var req dto.PaybackRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
 	}
 
-	err := h.service.CreateTransaction(c.Request.Context(), params)
+	userID := c.MustGet("userID").(int32)
+
+	err := h.service.Payback(
+		c.Request.Context(),
+		userID,
+		req,
+	)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -58,10 +81,52 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Transaction Created Successfully",
+		"message": "Payment successful",
 	})
-
 }
+
+func (h *TransactionHandler) GetMyTransactions(c *gin.Context) {
+
+	userID := c.MustGet("userID").(int32)
+
+	transactions, err := h.service.GetTransactionsByCustomerID(
+		c.Request.Context(),
+		userID,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, transactions)
+}
+
+func (h *TransactionHandler) GetMerchantTransactions(c *gin.Context) {
+
+	merchantID := c.MustGet("userID").(int32)
+
+	transactions, err := h.service.GetTransactionsByMerchantID(
+		c.Request.Context(),
+		sql.NullInt32{
+			Int32: merchantID,
+			Valid: true,
+		},
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, transactions)
+}
+
+
 
 func (h *TransactionHandler) GetAllTransactions(c *gin.Context) {
 

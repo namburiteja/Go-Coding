@@ -3,7 +3,7 @@ package auth
 import (
 	"time"
 
-	"paylater-backend/internal/config"
+	"paylater-backend/internal/platform/config"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -21,9 +21,7 @@ type Claims struct {
 }
 
 func GenerateJWT(userID int32, role string) (string, error) {
-
 	secret := []byte(config.GetEnv("JWT_SECRET"))
-
 	expiry := config.GetEnv("JWT_EXPIRY")
 
 	duration, err := time.ParseDuration(expiry)
@@ -41,13 +39,10 @@ func GenerateJWT(userID int32, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
 	return token.SignedString(secret)
 }
 
-
 func ValidateJWT(tokenString string) (*Claims, error) {
-
 	secret := []byte(config.GetEnv("JWT_SECRET"))
 
 	token, err := jwt.ParseWithClaims(
@@ -57,7 +52,6 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 			return secret, nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

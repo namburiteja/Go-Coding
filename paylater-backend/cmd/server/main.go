@@ -3,55 +3,53 @@ package main
 import (
 	"log"
 
+	"paylater-backend/internal/admin"
+	"paylater-backend/internal/customer"
 	db "paylater-backend/internal/db"
 	"paylater-backend/internal/database"
-	"paylater-backend/internal/service"
-	"paylater-backend/internal/handler"
+	"paylater-backend/internal/ledger"
+	"paylater-backend/internal/merchant"
+	"paylater-backend/internal/platform/config"
+	"paylater-backend/internal/report"
 	"paylater-backend/internal/routes"
+
 	"github.com/gin-gonic/gin"
-	"paylater-backend/internal/config"
 )
 
 func main() {
-
 	config.LoadEnv()
 
-	// Connect to MySQL
-	conn, err := database.NewMySQLConnection() // this helps to conn in internal/database/mysql.go
+	conn, err := database.NewMySQLConnection()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Initialize sqlc
 	queries := db.New(conn)
 
-	customerService := service.NewCustomerService(queries)
-	merchantService := service.NewMerchantService(queries)
-	transactionService := service.NewTransactionService(queries)
-	reportService := service.NewReportService(queries)
-	adminService := service.NewAdminService(queries)
+	customerService := customer.NewService(queries)
+	merchantService := merchant.NewService(queries)
+	ledgerService := ledger.NewService(queries)
+	reportService := report.NewService(queries)
+	adminService := admin.NewService(queries)
 
+	customerHandler := customer.NewHandler(customerService)
+	merchantHandler := merchant.NewHandler(merchantService)
+	ledgerHandler := ledger.NewHandler(ledgerService)
+	reportHandler := report.NewHandler(reportService)
+	adminHandler := admin.NewHandler(adminService)
 
-	// Handlers
-	customerHandler := handler.NewCustomerHandler(customerService)
-	merchantHandler := handler.NewMerchantHandler(merchantService)
-	transactionHandler := handler.NewTransactionHandler(transactionService)
-	reportHandler := handler.NewReportHandler(reportService)
-	adminHandler := handler.NewAdminHandler(adminService)
-
-	// Gin
 	router := gin.Default()
-
-	// Routes
-	routes.SetupRoutes(router, customerHandler, merchantHandler, transactionHandler, reportHandler, adminHandler)
+	routes.SetupRoutes(
+		router,
+		customerHandler,
+		merchantHandler,
+		ledgerHandler,
+		reportHandler,
+		adminHandler,
+	)
 
 	log.Println("Server Started on :9090")
-
-	router.Run(":9090")
-
-	log.Println("Database Connected Successfully")
-
-	_ = queries
-	
-	_ = customerService
+	if err := router.Run(":9090"); err != nil {
+		log.Fatal(err)
+	}
 }

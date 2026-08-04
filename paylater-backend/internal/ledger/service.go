@@ -12,11 +12,24 @@ import (
 )
 
 type Service struct {
-	queries *db.Queries
+	db        *sql.DB
+	queries   *db.Queries
+	customers CustomerCreditFactory
+	merchants MerchantCommissionFactory
 }
 
-func NewService(queries *db.Queries) *Service {
-	return &Service{queries: queries}
+func NewService(
+	database *sql.DB,
+	queries *db.Queries,
+	customers CustomerCreditFactory,
+	merchants MerchantCommissionFactory,
+) *Service {
+	return &Service{
+		db:        database,
+		queries:   queries,
+		customers: customers,
+		merchants: merchants,
+	}
 }
 
 func (s *Service) Purchase(ctx context.Context, customerID int32, req PurchaseRequest) error {
@@ -42,7 +55,17 @@ func (s *Service) Payback(ctx context.Context, customerID int32, req PaybackRequ
 }
 
 func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactionParams) error {
-	customer, err := s.queries.GetCustomerByID(ctx, arg.CustomerID)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	qtx := s.queries.WithTx(tx)
+	customers := s.customers(qtx)
+	merchants := s.merchants(qtx)
+
+	customer, err := customers.GetForUpdate(ctx, arg.CustomerID)
 	if err != nil {
 		return errors.New("customer not found")
 	}
@@ -76,17 +99,11 @@ func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactio
 	switch arg.TransactionType {
 	case db.TransactionsTransactionTypePURCHASE:
 		if time.Now().After(customer.PaymentDueDate) {
-			err := s.queries.UpdateCustomerStatus(
-				ctx,
-				db.UpdateCustomerStatusParams{
-					ID: customer.ID,
-					Status: db.NullCustomersStatus{
-						CustomersStatus: db.CustomersStatusBLOCKED,
-						Valid:           true,
-					},
-				},
-			)
-			if err != nil {
+			if err := customers.Block(ctx, customer.ID); err != nil {
+				return err
+			}
+			// Persist the block even though the purchase is rejected.
+			if err := tx.Commit(); err != nil {
 				return err
 			}
 			return errors.New("payment due date crossed, customer has been blocked")
@@ -96,7 +113,7 @@ func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactio
 			return errors.New("merchant id required")
 		}
 
-		merchant, err := s.queries.GetMerchantByID(ctx, arg.MerchantID.Int32)
+		merchant, err := merchants.GetCommission(ctx, arg.MerchantID.Int32)
 		if err != nil {
 			return errors.New("merchant not found")
 		}
@@ -124,19 +141,14 @@ func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactio
 			Valid:  true,
 		}
 
-		_, err = s.queries.CreateTransaction(ctx, arg)
-		if err != nil {
+		if _, err = qtx.CreateTransaction(ctx, arg); err != nil {
 			return err
 		}
 
 		newDue := currentDue + amount
-		return s.queries.UpdateCustomerDue(ctx, db.UpdateCustomerDueParams{
-			ID: customer.ID,
-			TotalDue: sql.NullString{
-				String: fmt.Sprintf("%.2f", newDue),
-				Valid:  true,
-			},
-		})
+		if err := customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", newDue)); err != nil {
+			return err
+		}
 
 	case db.TransactionsTransactionTypePAYBACK:
 		if currentDue == 0 {
@@ -150,23 +162,20 @@ func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactio
 		arg.CommissionPercentage = sql.NullString{}
 		arg.CommissionAmount = sql.NullString{}
 
-		_, err = s.queries.CreateTransaction(ctx, arg)
-		if err != nil {
+		if _, err = qtx.CreateTransaction(ctx, arg); err != nil {
 			return err
 		}
 
 		newDue := currentDue - amount
-		return s.queries.UpdateCustomerDue(ctx, db.UpdateCustomerDueParams{
-			ID: customer.ID,
-			TotalDue: sql.NullString{
-				String: fmt.Sprintf("%.2f", newDue),
-				Valid:  true,
-			},
-		})
+		if err := customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", newDue)); err != nil {
+			return err
+		}
 
 	default:
 		return errors.New("invalid transaction type")
 	}
+
+	return tx.Commit()
 }
 
 func (s *Service) GetAllTransactions(ctx context.Context) ([]db.Transaction, error) {

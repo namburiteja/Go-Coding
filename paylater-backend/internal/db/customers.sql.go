@@ -158,6 +158,7 @@ SELECT id, name, email, password, credit_limit, total_due, payment_due_date, sta
 FROM customers
 WHERE id = ?
 LIMIT 1
+FOR UPDATE
 `
 
 func (q *Queries) GetCustomerByIDForUpdate(ctx context.Context, id int32) (Customer, error) {

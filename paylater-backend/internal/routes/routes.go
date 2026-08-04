@@ -1,11 +1,11 @@
 package routes
 
 import (
-	"paylater-backend/internal/admin"
 	"paylater-backend/internal/customer"
 	"paylater-backend/internal/ledger"
 	"paylater-backend/internal/merchant"
 	"paylater-backend/internal/platform/middleware"
+	"paylater-backend/internal/platform/proxy"
 	"paylater-backend/internal/report"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +17,7 @@ func SetupRoutes(
 	merchantHandler *merchant.Handler,
 	ledgerHandler *ledger.Handler,
 	reportHandler *report.Handler,
-	adminHandler *admin.Handler,
+	adminServiceURL string,
 ) {
 	customers := router.Group("/customers")
 	{
@@ -173,37 +173,7 @@ func SetupRoutes(
 		reports.GET("/merchant-fees", reportHandler.GetAllMerchantsFeeCollected)
 	}
 
-	admins := router.Group("/admins")
-	{
-		admins.POST("/register", adminHandler.RegisterAdmin)
-		admins.POST("/login", adminHandler.LoginAdmin)
-
-		admins.GET(
-			"",
-			middleware.AuthMiddleware(),
-			middleware.AdminOnly(),
-			adminHandler.GetAllAdmins,
-		)
-
-		admins.GET(
-			"/:id",
-			middleware.AuthMiddleware(),
-			middleware.AdminOnly(),
-			adminHandler.GetAdminByID,
-		)
-
-		admins.PUT(
-			"/:id",
-			middleware.AuthMiddleware(),
-			middleware.AdminOnly(),
-			adminHandler.UpdateAdmin,
-		)
-
-		admins.DELETE(
-			"/:id",
-			middleware.AuthMiddleware(),
-			middleware.AdminOnly(),
-			adminHandler.DeleteAdminByID,
-		)
-	}
+	adminProxy := proxy.Forward(adminServiceURL)
+	router.Any("/admins", adminProxy)
+	router.Any("/admins/*path", adminProxy)
 }

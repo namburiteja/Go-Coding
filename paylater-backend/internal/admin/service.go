@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	db "paylater-backend/internal/db"
+	db "paylater-backend/internal/admin/db"
 	"paylater-backend/internal/platform/auth"
 )
 

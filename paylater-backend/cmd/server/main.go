@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 
-	"paylater-backend/internal/admin"
 	"paylater-backend/internal/customer"
 	db "paylater-backend/internal/db"
 	"paylater-backend/internal/database"
@@ -35,13 +34,16 @@ func main() {
 		ledger.NewMerchantCommissionSQLC,
 	)
 	reportService := report.NewService(queries)
-	adminService := admin.NewService(queries)
 
 	customerHandler := customer.NewHandler(customerService)
 	merchantHandler := merchant.NewHandler(merchantService)
 	ledgerHandler := ledger.NewHandler(ledgerService)
 	reportHandler := report.NewHandler(reportService)
-	adminHandler := admin.NewHandler(adminService)
+
+	adminServiceURL := config.GetEnv("ADMIN_SERVICE_URL")
+	if adminServiceURL == "" {
+		adminServiceURL = "http://localhost:9091"
+	}
 
 	router := gin.Default()
 	routes.SetupRoutes(
@@ -50,7 +52,7 @@ func main() {
 		merchantHandler,
 		ledgerHandler,
 		reportHandler,
-		adminHandler,
+		adminServiceURL,
 	)
 
 	log.Println("Server Started on :9090")

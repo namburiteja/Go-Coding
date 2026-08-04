@@ -95,14 +95,6 @@ func (ns NullTransactionsTransactionType) Value() (driver.Value, error) {
 	return string(ns.TransactionsTransactionType), nil
 }
 
-type Admin struct {
-	ID        int32        `json:"id"`
-	Name      string       `json:"name"`
-	Email     string       `json:"email"`
-	Password  string       `json:"password"`
-	CreatedAt sql.NullTime `json:"created_at"`
-}
-
 type Customer struct {
 	ID             int32               `json:"id"`
 	Name           string              `json:"name"`

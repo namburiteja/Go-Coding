@@ -63,4 +63,5 @@ WHERE id = ?;
 SELECT *
 FROM customers
 WHERE id = ?
-LIMIT 1;
+LIMIT 1
+FOR UPDATE;

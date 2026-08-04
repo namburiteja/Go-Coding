@@ -28,7 +28,12 @@ func main() {
 
 	customerService := customer.NewService(queries)
 	merchantService := merchant.NewService(queries)
-	ledgerService := ledger.NewService(queries)
+	ledgerService := ledger.NewService(
+		conn,
+		queries,
+		ledger.NewCustomerCreditSQLC,
+		ledger.NewMerchantCommissionSQLC,
+	)
 	reportService := report.NewService(queries)
 	adminService := admin.NewService(queries)
 

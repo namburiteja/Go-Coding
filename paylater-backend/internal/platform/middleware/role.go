@@ -3,14 +3,13 @@ package middleware
 import (
 	"net/http"
 
-	"paylater-backend/internal/auth"
+	"paylater-backend/internal/platform/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
 func AdminOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		role := c.GetString("role")
 
 		if role != auth.RoleAdmin {
@@ -27,7 +26,6 @@ func AdminOnly() gin.HandlerFunc {
 
 func MerchantOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		role := c.GetString("role")
 
 		if role != auth.RoleMerchant {
@@ -44,7 +42,6 @@ func MerchantOnly() gin.HandlerFunc {
 
 func CustomerOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		role := c.GetString("role")
 
 		if role != auth.RoleCustomer {

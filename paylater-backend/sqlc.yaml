@@ -8,4 +8,13 @@ sql:
       go:
         package: "db"
         out: "internal/db"
-        emit_json_tags : true 
+        emit_json_tags: true
+
+  - engine: "mysql"
+    queries: "sql/admin/queries"
+    schema: "sql/admin/schema"
+    gen:
+      go:
+        package: "db"
+        out: "internal/admin/db"
+        emit_json_tags: true

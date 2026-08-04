@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	db "paylater-backend/internal/db"
+	db "paylater-backend/internal/admin/db"
+	"paylater-backend/internal/platform/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +16,42 @@ type Handler struct {
 
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
+}
+
+func RegisterRoutes(router *gin.Engine, h *Handler) {
+	admins := router.Group("/admins")
+	{
+		admins.POST("/register", h.RegisterAdmin)
+		admins.POST("/login", h.LoginAdmin)
+
+		admins.GET(
+			"",
+			middleware.AuthMiddleware(),
+			middleware.AdminOnly(),
+			h.GetAllAdmins,
+		)
+
+		admins.GET(
+			"/:id",
+			middleware.AuthMiddleware(),
+			middleware.AdminOnly(),
+			h.GetAdminByID,
+		)
+
+		admins.PUT(
+			"/:id",
+			middleware.AuthMiddleware(),
+			middleware.AdminOnly(),
+			h.UpdateAdmin,
+		)
+
+		admins.DELETE(
+			"/:id",
+			middleware.AuthMiddleware(),
+			middleware.AdminOnly(),
+			h.DeleteAdminByID,
+		)
+	}
 }
 
 func (h *Handler) RegisterAdmin(c *gin.Context) {

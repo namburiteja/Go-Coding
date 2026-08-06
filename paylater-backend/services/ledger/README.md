@@ -13,7 +13,7 @@ Copy `.env.example` → `.env` in this directory.
 | `JWT_SECRET` | Must match other services (validates customer/merchant/admin JWTs) |
 | `CUSTOMER_SERVICE_URL` | Base URL for credit/due/block internal APIs |
 | `MERCHANT_SERVICE_URL` | Base URL for commission internal API |
-| `INTERNAL_SERVICE_TOKEN` | Reserved for Phase 10; unused today |
+| `INTERNAL_SERVICE_TOKEN` | Attached automatically by `shared/httpclient` on S2S calls |
 
 ## Run
 

@@ -11,7 +11,7 @@ Copy `.env.example` → `.env` in this directory.
 | `PORT` | Listen port |
 | `DB_*` | MySQL connection (shared `paylater` DB for now) |
 | `JWT_SECRET` | Must match other services (admin-only routes) |
-| `INTERNAL_SERVICE_TOKEN` | Reserved for Phase 10; unused today |
+| `INTERNAL_SERVICE_TOKEN` | Shared S2S token (for future Report → other services) |
 
 ## Run
 

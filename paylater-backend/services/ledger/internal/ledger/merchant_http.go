@@ -9,20 +9,20 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"paylater/shared/httpclient"
 )
 
 // MerchantCommissionHTTP implements MerchantCommissionPort over REST.
 type MerchantCommissionHTTP struct {
-	baseURL    string
-	httpClient *http.Client
+	baseURL string
+	client  *httpclient.Internal
 }
 
 func NewMerchantCommissionHTTP(baseURL string) *MerchantCommissionHTTP {
 	return &MerchantCommissionHTTP{
 		baseURL: baseURL,
-		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
+		client:  httpclient.NewInternal(10 * time.Second),
 	}
 }
 
@@ -34,12 +34,12 @@ type commissionResponse struct {
 func (c *MerchantCommissionHTTP) GetCommission(ctx context.Context, merchantID int32) (MerchantCommission, error) {
 	url := fmt.Sprintf("%s/internal/merchants/%d/commission", c.baseURL, merchantID)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := c.client.NewRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return MerchantCommission{}, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return MerchantCommission{}, fmt.Errorf("merchant service unreachable: %w", err)
 	}

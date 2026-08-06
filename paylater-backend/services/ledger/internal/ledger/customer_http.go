@@ -10,20 +10,20 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"paylater/shared/httpclient"
 )
 
 // CustomerCreditHTTP implements CustomerCreditPort over REST.
 type CustomerCreditHTTP struct {
-	baseURL    string
-	httpClient *http.Client
+	baseURL string
+	client  *httpclient.Internal
 }
 
 func NewCustomerCreditHTTP(baseURL string) *CustomerCreditHTTP {
 	return &CustomerCreditHTTP{
 		baseURL: baseURL,
-		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
+		client:  httpclient.NewInternal(10 * time.Second),
 	}
 }
 
@@ -42,12 +42,12 @@ type updateDueRequest struct {
 func (c *CustomerCreditHTTP) GetForUpdate(ctx context.Context, customerID int32) (CreditAccount, error) {
 	url := fmt.Sprintf("%s/internal/customers/%d/credit", c.baseURL, customerID)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := c.client.NewRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return CreditAccount{}, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return CreditAccount{}, fmt.Errorf("customer service unreachable: %w", err)
 	}
@@ -105,13 +105,13 @@ func (c *CustomerCreditHTTP) UpdateDue(ctx context.Context, customerID int32, to
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewReader(payload))
+	req, err := c.client.NewRequest(ctx, http.MethodPut, url, bytes.NewReader(payload))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("customer service unreachable: %w", err)
 	}
@@ -127,12 +127,12 @@ func (c *CustomerCreditHTTP) UpdateDue(ctx context.Context, customerID int32, to
 func (c *CustomerCreditHTTP) Block(ctx context.Context, customerID int32) error {
 	url := fmt.Sprintf("%s/internal/customers/%d/block", c.baseURL, customerID)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, nil)
+	req, err := c.client.NewRequest(ctx, http.MethodPut, url, nil)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("customer service unreachable: %w", err)
 	}

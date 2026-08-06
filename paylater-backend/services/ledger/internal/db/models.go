@@ -31,9 +31,10 @@ func (e *TransactionsTransactionType) Scan(src interface{}) error {
 
 type NullTransactionsTransactionType struct {
 	TransactionsTransactionType TransactionsTransactionType `json:"transactions_transaction_type"`
-	Valid                       bool                        `json:"valid"`
+	Valid                       bool                        `json:"valid"` // Valid is true if TransactionsTransactionType is not NULL
 }
 
+// Scan implements the Scanner interface.
 func (ns *NullTransactionsTransactionType) Scan(value interface{}) error {
 	if value == nil {
 		ns.TransactionsTransactionType, ns.Valid = "", false
@@ -43,6 +44,7 @@ func (ns *NullTransactionsTransactionType) Scan(value interface{}) error {
 	return ns.TransactionsTransactionType.Scan(value)
 }
 
+// Value implements the driver Valuer interface.
 func (ns NullTransactionsTransactionType) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil

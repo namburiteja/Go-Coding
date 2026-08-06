@@ -50,6 +50,11 @@ func RegisterRoutes(router *gin.Engine, h *Handler) {
 		middleware.AdminOnly(),
 		h.GetAllTransactions,
 	)
+
+	internal := router.Group("/internal/transactions", middleware.InternalServiceAuth())
+	{
+		internal.GET("/reports/merchant-fees", h.GetMerchantFeesInternal)
+	}
 }
 
 func (h *Handler) Purchase(c *gin.Context) {
@@ -158,4 +163,13 @@ func (h *Handler) GetTransactionsByMerchantID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, toTransactionResponses(transactions))
+}
+
+func (h *Handler) GetMerchantFeesInternal(c *gin.Context) {
+	fees, err := h.service.GetMerchantFeeTotals(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, fees)
 }

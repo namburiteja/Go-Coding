@@ -15,6 +15,12 @@ type PaybackRequest struct {
 	Amount string `json:"amount" binding:"required"`
 }
 
+// MerchantFeeTotal is returned to Report over the internal HTTP API.
+type MerchantFeeTotal struct {
+	MerchantID        int32  `json:"merchant_id"`
+	TotalFeeCollected string `json:"total_fee_collected"`
+}
+
 // TransactionResponse is the public JSON shape for transaction APIs.
 type TransactionResponse struct {
 	ID                   int32      `json:"id"`

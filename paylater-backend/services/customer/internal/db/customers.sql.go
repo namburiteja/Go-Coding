@@ -178,6 +178,109 @@ func (q *Queries) GetCustomerByIDForUpdate(ctx context.Context, id int32) (Custo
 	return i, err
 }
 
+const getCustomerDueByName = `-- name: GetCustomerDueByName :one
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
+FROM customers
+WHERE name = ?
+LIMIT 1
+`
+
+func (q *Queries) GetCustomerDueByName(ctx context.Context, name string) (Customer, error) {
+	row := q.db.QueryRowContext(ctx, getCustomerDueByName, name)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.CreditLimit,
+		&i.TotalDue,
+		&i.PaymentDueDate,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getCustomersWithDue = `-- name: GetCustomersWithDue :many
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
+FROM customers
+WHERE total_due > 0
+ORDER BY total_due DESC
+`
+
+func (q *Queries) GetCustomersWithDue(ctx context.Context) ([]Customer, error) {
+	rows, err := q.db.QueryContext(ctx, getCustomersWithDue)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Customer
+	for rows.Next() {
+		var i Customer
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Password,
+			&i.CreditLimit,
+			&i.TotalDue,
+			&i.PaymentDueDate,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersAtCreditLimit = `-- name: GetUsersAtCreditLimit :many
+SELECT id, name, email, password, credit_limit, total_due, payment_due_date, status, created_at
+FROM customers
+WHERE total_due >= credit_limit
+`
+
+func (q *Queries) GetUsersAtCreditLimit(ctx context.Context) ([]Customer, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersAtCreditLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Customer
+	for rows.Next() {
+		var i Customer
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Password,
+			&i.CreditLimit,
+			&i.TotalDue,
+			&i.PaymentDueDate,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const increaseCustomerDue = `-- name: IncreaseCustomerDue :exec
 UPDATE customers
 SET total_due = total_due + ?

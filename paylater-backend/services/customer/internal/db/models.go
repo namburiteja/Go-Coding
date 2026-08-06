@@ -32,9 +32,10 @@ func (e *CustomersStatus) Scan(src interface{}) error {
 
 type NullCustomersStatus struct {
 	CustomersStatus CustomersStatus `json:"customers_status"`
-	Valid           bool            `json:"valid"`
+	Valid           bool            `json:"valid"` // Valid is true if CustomersStatus is not NULL
 }
 
+// Scan implements the Scanner interface.
 func (ns *NullCustomersStatus) Scan(value interface{}) error {
 	if value == nil {
 		ns.CustomersStatus, ns.Valid = "", false
@@ -44,6 +45,7 @@ func (ns *NullCustomersStatus) Scan(value interface{}) error {
 	return ns.CustomersStatus.Scan(value)
 }
 
+// Value implements the driver Valuer interface.
 func (ns NullCustomersStatus) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil

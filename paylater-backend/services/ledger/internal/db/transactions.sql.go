@@ -88,6 +88,43 @@ func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error)
 	return items, nil
 }
 
+const getMerchantFeeTotals = `-- name: GetMerchantFeeTotals :many
+SELECT
+    merchant_id,
+    CAST(COALESCE(SUM(commission_amount), 0) AS CHAR) AS total_fee_collected
+FROM transactions
+WHERE merchant_id IS NOT NULL
+GROUP BY merchant_id
+`
+
+type GetMerchantFeeTotalsRow struct {
+	MerchantID        sql.NullInt32 `json:"merchant_id"`
+	TotalFeeCollected interface{}   `json:"total_fee_collected"`
+}
+
+func (q *Queries) GetMerchantFeeTotals(ctx context.Context) ([]GetMerchantFeeTotalsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMerchantFeeTotals)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMerchantFeeTotalsRow
+	for rows.Next() {
+		var i GetMerchantFeeTotalsRow
+		if err := rows.Scan(&i.MerchantID, &i.TotalFeeCollected); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTransactionsByCustomerID = `-- name: GetTransactionsByCustomerID :many
 SELECT id, customer_id, merchant_id, transaction_type, amount, commission_percentage, commission_amount, transaction_date
 FROM transactions

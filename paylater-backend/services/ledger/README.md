@@ -38,6 +38,12 @@ go run ./services/ledger/cmd
 - `GET /merchants/me/transactions`
 - `GET /transactions`
 
+## Internal API (Report)
+
+Require header `X-Internal-Service-Token: <INTERNAL_SERVICE_TOKEN>`.
+
+- `GET /internal/transactions/reports/merchant-fees` — `{merchant_id, total_fee_collected}` aggregates
+
 ## Docker
 
 ```bash

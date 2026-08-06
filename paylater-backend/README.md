@@ -23,7 +23,8 @@ paylater/
 - **Gateway** is a pure edge: routing and proxy to downstream services only.
 - Domain logic and SQL live in the five services under `services/`.
 - Each process loads **only its own** `.env` (under `gateway/` or `services/<name>/`).
-- All services still use the shared MySQL database `paylater` (`DB_NAME`). Database-per-service comes in a later phase.
+- Report is an **aggregator**: it has no MySQL connection and calls Customer/Merchant/Ledger over internal HTTP.
+- All other business services still use the shared MySQL database `paylater` (`DB_NAME`). Database-per-service comes in a later phase.
 - Use the **same** `JWT_SECRET` in every service that issues or validates tokens.
 - Use the **same** `INTERNAL_SERVICE_TOKEN` for all service-to-service calls (`X-Internal-Service-Token`). End-user JWT is never used for `/internal/*`.
 
@@ -36,7 +37,7 @@ paylater/
 | Merchant | `services/merchant/.env` | same pattern |
 | Customer | `services/customer/.env` | same pattern |
 | Ledger | `services/ledger/.env` | plus `CUSTOMER_SERVICE_URL`, `MERCHANT_SERVICE_URL` |
-| Report | `services/report/.env` | `PORT`, `DB_*`, `JWT_SECRET`, `INTERNAL_SERVICE_TOKEN` |
+| Report | `services/report/.env` | `PORT`, `JWT_SECRET`, upstream URLs, `INTERNAL_SERVICE_TOKEN` (no `DB_*`) |
 
 Copy each `.env.example` → `.env` before the first run (examples are committed; `.env` is gitignored).
 

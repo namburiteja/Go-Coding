@@ -4,10 +4,8 @@ import (
 	"log"
 	"path/filepath"
 
-	db "paylater/services/report/internal/db"
 	"paylater/services/report/internal/report"
 	"paylater/shared/config"
-	"paylater/shared/database"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,13 +17,15 @@ func main() {
 		filepath.Join("..", ".env"),
 	)
 
-	conn, err := database.NewMySQLConnection()
-	if err != nil {
-		log.Fatal(err)
-	}
+	customerServiceURL := config.RequireEnv("CUSTOMER_SERVICE_URL")
+	merchantServiceURL := config.RequireEnv("MERCHANT_SERVICE_URL")
+	ledgerServiceURL := config.RequireEnv("LEDGER_SERVICE_URL")
 
-	queries := db.New(conn)
-	reportService := report.NewService(queries)
+	reportService := report.NewService(
+		report.NewCustomersAPI(customerServiceURL),
+		report.NewMerchantsAPI(merchantServiceURL),
+		report.NewLedgerAPI(ledgerServiceURL),
+	)
 	reportHandler := report.NewHandler(reportService)
 
 	router := gin.Default()

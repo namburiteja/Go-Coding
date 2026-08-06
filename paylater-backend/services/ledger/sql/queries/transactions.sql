@@ -33,3 +33,11 @@ ORDER BY transaction_date DESC;
 -- name: GetAllTransactions :many
 SELECT *
 FROM transactions;
+
+-- name: GetMerchantFeeTotals :many
+SELECT
+    merchant_id,
+    CAST(COALESCE(SUM(commission_amount), 0) AS CHAR) AS total_fee_collected
+FROM transactions
+WHERE merchant_id IS NOT NULL
+GROUP BY merchant_id;

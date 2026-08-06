@@ -22,6 +22,12 @@ type CommissionResponse struct {
 	CommissionPercentage *string `json:"commission_percentage"`
 }
 
+// MerchantNameResponse is returned to Report over the internal HTTP API.
+type MerchantNameResponse struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+}
+
 // UpdateCommissionRequest is the public body for PUT /merchants/:id/commission.
 type UpdateCommissionRequest struct {
 	CommissionPercentage string `json:"commission_percentage" binding:"required"`

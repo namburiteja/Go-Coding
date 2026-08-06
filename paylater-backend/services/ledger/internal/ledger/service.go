@@ -216,3 +216,42 @@ func (s *Service) GetTransactionsByCustomerID(ctx context.Context, customerID in
 func (s *Service) GetTransactionsByMerchantID(ctx context.Context, merchantID sql.NullInt32) ([]db.Transaction, error) {
 	return s.queries.GetTransactionsByMerchantID(ctx, merchantID)
 }
+
+func (s *Service) GetMerchantFeeTotals(ctx context.Context) ([]MerchantFeeTotal, error) {
+	rows, err := s.queries.GetMerchantFeeTotals(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]MerchantFeeTotal, 0, len(rows))
+	for _, row := range rows {
+		if !row.MerchantID.Valid {
+			continue
+		}
+		out = append(out, MerchantFeeTotal{
+			MerchantID:        row.MerchantID.Int32,
+			TotalFeeCollected: feeCollectedToString(row.TotalFeeCollected),
+		})
+	}
+	return out, nil
+}
+
+func feeCollectedToString(v interface{}) string {
+	if v == nil {
+		return "0"
+	}
+	switch t := v.(type) {
+	case []byte:
+		if len(t) == 0 {
+			return "0"
+		}
+		return string(t)
+	case string:
+		if t == "" {
+			return "0"
+		}
+		return t
+	default:
+		return fmt.Sprintf("%v", t)
+	}
+}

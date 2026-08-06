@@ -29,11 +29,12 @@ From repo root:
 go run ./services/merchant/cmd
 ```
 
-## Internal API (Ledger)
+## Internal API (Ledger / Report)
 
 Require header `X-Internal-Service-Token: <INTERNAL_SERVICE_TOKEN>` (not end-user JWT).
 
-`GET /internal/merchants/:id/commission` — commission snapshot for purchase fees (not proxied by gateway).
+- `GET /internal/merchants/:id/commission` — commission snapshot for purchase fees (Ledger)
+- `GET /internal/merchants/reports/names` — `{id,name}` list for Report fee aggregation
 
 ## SQLC
 

@@ -71,6 +71,11 @@ func RegisterRoutes(router *gin.Engine, h *Handler) {
 
 	internal := router.Group("/internal/customers", middleware.InternalServiceAuth())
 	{
+		// Report routes before /:id so "reports" is not captured as an id.
+		internal.GET("/reports/at-credit-limit", h.GetUsersAtCreditLimitInternal)
+		internal.GET("/reports/with-due", h.GetCustomersWithDueInternal)
+		internal.GET("/reports/due-by-name/:name", h.GetCustomerDueByNameInternal)
+
 		internal.GET("/:id/credit", h.GetCreditInternal)
 		internal.PUT("/:id/due", h.UpdateDueInternal)
 		internal.PUT("/:id/block", h.BlockInternal)
@@ -263,6 +268,38 @@ func (h *Handler) BlockInternal(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "customer blocked"})
+}
+
+func (h *Handler) GetUsersAtCreditLimitInternal(c *gin.Context) {
+	users, err := h.service.GetUsersAtCreditLimit(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, users)
+}
+
+func (h *Handler) GetCustomersWithDueInternal(c *gin.Context) {
+	customers, err := h.service.GetCustomersWithDue(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, customers)
+}
+
+func (h *Handler) GetCustomerDueByNameInternal(c *gin.Context) {
+	name := c.Param("name")
+	customer, err := h.service.GetCustomerDueByName(c.Request.Context(), name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "customer not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, customer)
 }
 
 func toCreditSnapshot(customer db.Customer) CreditSnapshotResponse {

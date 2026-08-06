@@ -130,6 +130,40 @@ func (q *Queries) GetMerchantByID(ctx context.Context, id int32) (Merchant, erro
 	return i, err
 }
 
+const getMerchantNames = `-- name: GetMerchantNames :many
+SELECT id, name
+FROM merchants
+ORDER BY id ASC
+`
+
+type GetMerchantNamesRow struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+}
+
+func (q *Queries) GetMerchantNames(ctx context.Context) ([]GetMerchantNamesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMerchantNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMerchantNamesRow
+	for rows.Next() {
+		var i GetMerchantNamesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateMerchant = `-- name: UpdateMerchant :exec
 UPDATE merchants
 SET name = ?,email = ?

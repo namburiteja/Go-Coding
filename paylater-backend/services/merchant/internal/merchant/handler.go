@@ -77,12 +77,13 @@ func RegisterRoutes(router *gin.Engine, h *Handler) {
 		)
 	}
 
-	// Service-to-service: Ledger reads commission with INTERNAL_SERVICE_TOKEN (not end-user JWT).
-	router.GET(
-		"/internal/merchants/:id/commission",
-		middleware.InternalServiceAuth(),
-		h.GetCommissionInternal,
-	)
+	// Service-to-service internal APIs (INTERNAL_SERVICE_TOKEN, not end-user JWT).
+	internal := router.Group("/internal/merchants", middleware.InternalServiceAuth())
+	{
+		// Report route before /:id so "reports" is not captured as an id.
+		internal.GET("/reports/names", h.GetMerchantNamesInternal)
+		internal.GET("/:id/commission", h.GetCommissionInternal)
+	}
 }
 
 func (h *Handler) RegisterMerchant(c *gin.Context) {
@@ -272,4 +273,19 @@ func (h *Handler) GetCommissionInternal(c *gin.Context) {
 		ID:                   merchant.ID,
 		CommissionPercentage: percentage,
 	})
+}
+
+// GetMerchantNamesInternal is called by Report over REST (not exposed via gateway).
+func (h *Handler) GetMerchantNamesInternal(c *gin.Context) {
+	names, err := h.service.GetMerchantNames(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	out := make([]MerchantNameResponse, 0, len(names))
+	for _, n := range names {
+		out = append(out, MerchantNameResponse{ID: n.ID, Name: n.Name})
+	}
+	c.JSON(http.StatusOK, out)
 }

@@ -33,32 +33,32 @@ func RegisterRoutes(router *gin.Engine, h *Handler) {
 }
 
 func (h *Handler) GetUsersAtCreditLimit(c *gin.Context) {
-	users, err := h.service.GetUsersAtCreditLimit(c.Request.Context())
+	body, err := h.service.GetUsersAtCreditLimit(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, users)
+	c.Data(http.StatusOK, "application/json", body)
 }
 
 func (h *Handler) GetCustomersWithDue(c *gin.Context) {
-	customers, err := h.service.GetCustomersWithDue(c.Request.Context())
+	body, err := h.service.GetCustomersWithDue(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, customers)
+	c.Data(http.StatusOK, "application/json", body)
 }
 
 func (h *Handler) GetCustomerDueByName(c *gin.Context) {
 	name := c.Param("name")
 
-	due, err := h.service.GetCustomerDueByName(c.Request.Context(), name)
+	body, err := h.service.GetCustomerDueByName(c.Request.Context(), name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, due)
+	c.Data(http.StatusOK, "application/json", body)
 }
 
 func (h *Handler) GetAllMerchantsFeeCollected(c *gin.Context) {

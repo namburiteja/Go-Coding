@@ -1,3 +1,9 @@
 # Report service
 
-Owns report SQLC queries and `/reports/*` APIs. Reads customer/merchant/transaction tables.
+Aggregator microservice (Phase 10). No domain database.
+
+Public admin routes under `/reports/*` are fulfilled by calling:
+
+- Customer `/internal/customers/reports/*`
+- Merchant `/internal/merchants/reports/names`
+- Ledger `/internal/transactions/reports/merchant-fees`

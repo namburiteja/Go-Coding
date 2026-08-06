@@ -40,3 +40,8 @@ WHERE id = ?;
 SELECT *
 FROM merchants
 WHERE email = ?;
+
+-- name: GetMerchantNames :many
+SELECT id, name
+FROM merchants
+ORDER BY id ASC;

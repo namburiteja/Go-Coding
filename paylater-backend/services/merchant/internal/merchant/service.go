@@ -87,3 +87,7 @@ func (s *Service) UpdateMerchant(ctx context.Context, arg db.UpdateMerchantParam
 func (s *Service) DeleteMerchant(ctx context.Context, id int32) error {
 	return s.queries.DeleteMerchantById(ctx, id)
 }
+
+func (s *Service) GetMerchantNames(ctx context.Context) ([]db.GetMerchantNamesRow, error) {
+	return s.queries.GetMerchantNames(ctx)
+}

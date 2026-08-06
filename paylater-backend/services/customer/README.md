@@ -29,13 +29,21 @@ From repo root:
 go run ./services/customer/cmd
 ```
 
-## Internal APIs (Ledger)
+## Internal APIs (Ledger / Report)
 
 Require header `X-Internal-Service-Token: <INTERNAL_SERVICE_TOKEN>` (not end-user JWT).
+
+Ledger:
 
 - `GET /internal/customers/:id/credit` — credit snapshot (`FOR UPDATE` read)
 - `PUT /internal/customers/:id/due` — body `{"total_due":"12.34"}`
 - `PUT /internal/customers/:id/block` — set status `BLOCKED`
+
+Report:
+
+- `GET /internal/customers/reports/at-credit-limit`
+- `GET /internal/customers/reports/with-due`
+- `GET /internal/customers/reports/due-by-name/:name`
 
 ## Docker
 

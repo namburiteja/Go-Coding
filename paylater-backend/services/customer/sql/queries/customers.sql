@@ -65,3 +65,20 @@ FROM customers
 WHERE id = ?
 LIMIT 1
 FOR UPDATE;
+
+-- name: GetUsersAtCreditLimit :many
+SELECT *
+FROM customers
+WHERE total_due >= credit_limit;
+
+-- name: GetCustomersWithDue :many
+SELECT *
+FROM customers
+WHERE total_due > 0
+ORDER BY total_due DESC;
+
+-- name: GetCustomerDueByName :one
+SELECT *
+FROM customers
+WHERE name = ?
+LIMIT 1;

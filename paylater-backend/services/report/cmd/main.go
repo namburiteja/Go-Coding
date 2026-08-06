@@ -1,7 +1,8 @@
-package main
+﻿package main
 
 import (
 	"log"
+	"path/filepath"
 
 	db "paylater/services/report/internal/db"
 	"paylater/services/report/internal/report"
@@ -12,7 +13,11 @@ import (
 )
 
 func main() {
-	config.LoadEnv()
+	config.LoadEnv(
+		filepath.Join("services", "report", ".env"),
+		".env",
+		filepath.Join("..", ".env"),
+	)
 
 	conn, err := database.NewMySQLConnection()
 	if err != nil {
@@ -26,11 +31,7 @@ func main() {
 	router := gin.Default()
 	report.RegisterRoutes(router, reportHandler)
 
-	addr := config.GetEnv("REPORT_SERVICE_ADDR")
-	if addr == "" {
-		addr = ":9095"
-	}
-
+	addr := config.ListenAddr()
 	log.Println("Report service started on", addr)
 	if err := router.Run(addr); err != nil {
 		log.Fatal(err)

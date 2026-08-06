@@ -97,7 +97,7 @@ func (h *Handler) GetMyTransactions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transactions)
+	c.JSON(http.StatusOK, toTransactionResponses(transactions))
 }
 
 func (h *Handler) GetMerchantTransactions(c *gin.Context) {
@@ -112,7 +112,7 @@ func (h *Handler) GetMerchantTransactions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transactions)
+	c.JSON(http.StatusOK, toTransactionResponses(transactions))
 }
 
 func (h *Handler) GetAllTransactions(c *gin.Context) {
@@ -122,7 +122,7 @@ func (h *Handler) GetAllTransactions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transactions)
+	c.JSON(http.StatusOK, toTransactionResponses(transactions))
 }
 
 func (h *Handler) GetTransactionsByCustomerID(c *gin.Context) {
@@ -138,7 +138,7 @@ func (h *Handler) GetTransactionsByCustomerID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transactions)
+	c.JSON(http.StatusOK, toTransactionResponses(transactions))
 }
 
 func (h *Handler) GetTransactionsByMerchantID(c *gin.Context) {
@@ -157,5 +157,5 @@ func (h *Handler) GetTransactionsByMerchantID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transactions)
+	c.JSON(http.StatusOK, toTransactionResponses(transactions))
 }

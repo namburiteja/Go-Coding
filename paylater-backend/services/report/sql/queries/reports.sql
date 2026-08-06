@@ -20,7 +20,7 @@ LIMIT 1;
 SELECT
     m.id,
     m.name,
-    COALESCE(SUM(t.commission_amount), 0) AS total_fee_collected
+    CAST(COALESCE(SUM(t.commission_amount), 0) AS CHAR) AS total_fee_collected
 FROM merchants m
 LEFT JOIN transactions t
     ON m.id = t.merchant_id

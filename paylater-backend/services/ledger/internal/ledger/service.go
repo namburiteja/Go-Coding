@@ -55,17 +55,14 @@ func (s *Service) Payback(ctx context.Context, customerID int32, req PaybackRequ
 }
 
 func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactionParams) error {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	qtx := s.queries.WithTx(tx)
-
+	// Resolve remote credit/commission before opening the local DB transaction
+	// so we do not hold MySQL locks across HTTP calls.
 	customer, err := s.customers.GetForUpdate(ctx, arg.CustomerID)
 	if err != nil {
-		return errors.New("customer not found")
+		if err.Error() == "customer not found" {
+			return errors.New("customer not found")
+		}
+		return err
 	}
 
 	if customer.StatusValid && customer.Status == "BLOCKED" {
@@ -95,7 +92,7 @@ func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactio
 
 	switch arg.TransactionType {
 	case db.TransactionsTransactionTypePURCHASE:
-		if time.Now().After(customer.PaymentDueDate) {
+		if dateOnly(time.Now()).After(dateOnly(customer.PaymentDueDate)) {
 			if err := s.customers.Block(ctx, customer.ID); err != nil {
 				return err
 			}
@@ -108,7 +105,10 @@ func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactio
 
 		merchant, err := s.merchants.GetCommission(ctx, arg.MerchantID.Int32)
 		if err != nil {
-			return errors.New("merchant not found")
+			if err.Error() == "merchant not found" {
+				return errors.New("merchant not found")
+			}
+			return err
 		}
 
 		if currentDue+amount > creditLimit {
@@ -134,14 +134,31 @@ func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactio
 			Valid:  true,
 		}
 
-		if _, err = qtx.CreateTransaction(ctx, arg); err != nil {
-			return err
-		}
-
+		// Update customer due over HTTP before the local ledger write.
+		// Holding a ledger TX open across HTTP deadlocks when transactions
+		// and customers share MySQL (FK / row locks on customers).
 		newDue := currentDue + amount
 		if err := s.customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", newDue)); err != nil {
 			return err
 		}
+
+		tx, err := s.db.BeginTx(ctx, nil)
+		if err != nil {
+			_ = s.customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", currentDue))
+			return err
+		}
+		defer tx.Rollback()
+
+		if _, err = s.queries.WithTx(tx).CreateTransaction(ctx, arg); err != nil {
+			_ = s.customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", currentDue))
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			_ = s.customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", currentDue))
+			return err
+		}
+		return nil
 
 	case db.TransactionsTransactionTypePAYBACK:
 		if currentDue == 0 {
@@ -155,20 +172,37 @@ func (s *Service) CreateTransaction(ctx context.Context, arg db.CreateTransactio
 		arg.CommissionPercentage = sql.NullString{}
 		arg.CommissionAmount = sql.NullString{}
 
-		if _, err = qtx.CreateTransaction(ctx, arg); err != nil {
-			return err
-		}
-
 		newDue := currentDue - amount
 		if err := s.customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", newDue)); err != nil {
 			return err
 		}
 
+		tx, err := s.db.BeginTx(ctx, nil)
+		if err != nil {
+			_ = s.customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", currentDue))
+			return err
+		}
+		defer tx.Rollback()
+
+		if _, err = s.queries.WithTx(tx).CreateTransaction(ctx, arg); err != nil {
+			_ = s.customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", currentDue))
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			_ = s.customers.UpdateDue(ctx, customer.ID, fmt.Sprintf("%.2f", currentDue))
+			return err
+		}
+		return nil
+
 	default:
 		return errors.New("invalid transaction type")
 	}
+}
 
-	return tx.Commit()
+func dateOnly(t time.Time) time.Time {
+	y, m, d := t.Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 }
 
 func (s *Service) GetAllTransactions(ctx context.Context) ([]db.Transaction, error) {

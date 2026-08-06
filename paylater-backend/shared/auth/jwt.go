@@ -21,12 +21,12 @@ type Claims struct {
 }
 
 func GenerateJWT(userID int32, role string) (string, error) {
-	secret := []byte(config.GetEnv("JWT_SECRET"))
-	expiry := config.GetEnv("JWT_EXPIRY")
+	secret := []byte(config.RequireEnv("JWT_SECRET"))
+	expiry := config.RequireEnv("JWT_EXPIRY")
 
 	duration, err := time.ParseDuration(expiry)
 	if err != nil {
-		duration = 24 * time.Hour
+		return "", err
 	}
 
 	claims := Claims{
@@ -43,7 +43,7 @@ func GenerateJWT(userID int32, role string) (string, error) {
 }
 
 func ValidateJWT(tokenString string) (*Claims, error) {
-	secret := []byte(config.GetEnv("JWT_SECRET"))
+	secret := []byte(config.RequireEnv("JWT_SECRET"))
 
 	token, err := jwt.ParseWithClaims(
 		tokenString,

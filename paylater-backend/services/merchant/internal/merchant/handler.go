@@ -180,15 +180,19 @@ func (h *Handler) UpdateMerchantCommission(c *gin.Context) {
 		return
 	}
 
-	var req db.UpdateMerchantCommissionParams
+	var req UpdateCommissionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	req.ID = int32(id)
-
-	err = h.service.UpdateMerchantCommission(c.Request.Context(), req)
+	err = h.service.UpdateMerchantCommission(c.Request.Context(), db.UpdateMerchantCommissionParams{
+		ID: int32(id),
+		CommissionPercentage: sql.NullString{
+			String: req.CommissionPercentage,
+			Valid:  true,
+		},
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

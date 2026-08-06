@@ -1,10 +1,11 @@
-package main
+﻿package main
 
 import (
 	"log"
+	"path/filepath"
 
-	"paylater/services/merchant/internal/merchant"
 	db "paylater/services/merchant/internal/db"
+	"paylater/services/merchant/internal/merchant"
 	"paylater/shared/config"
 	"paylater/shared/database"
 
@@ -12,7 +13,11 @@ import (
 )
 
 func main() {
-	config.LoadEnv()
+	config.LoadEnv(
+		filepath.Join("services", "merchant", ".env"),
+		".env",
+		filepath.Join("..", ".env"),
+	)
 
 	conn, err := database.NewMySQLConnection()
 	if err != nil {
@@ -26,11 +31,7 @@ func main() {
 	router := gin.Default()
 	merchant.RegisterRoutes(router, merchantHandler)
 
-	addr := config.GetEnv("MERCHANT_SERVICE_ADDR")
-	if addr == "" {
-		addr = ":9092"
-	}
-
+	addr := config.ListenAddr()
 	log.Println("Merchant service started on", addr)
 	if err := router.Run(addr); err != nil {
 		log.Fatal(err)

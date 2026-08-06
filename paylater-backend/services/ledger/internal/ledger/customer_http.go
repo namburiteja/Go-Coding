@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -21,17 +22,17 @@ func NewCustomerCreditHTTP(baseURL string) *CustomerCreditHTTP {
 	return &CustomerCreditHTTP{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: 10 * time.Second,
 		},
 	}
 }
 
 type creditSnapshotResponse struct {
-	ID             int32     `json:"id"`
-	CreditLimit    string    `json:"credit_limit"`
-	TotalDue       *string   `json:"total_due"`
-	PaymentDueDate time.Time `json:"payment_due_date"`
-	Status         *string   `json:"status"`
+	ID             int32           `json:"id"`
+	CreditLimit    json.RawMessage `json:"credit_limit"`
+	TotalDue       json.RawMessage `json:"total_due"`
+	PaymentDueDate time.Time       `json:"payment_due_date"`
+	Status         *string         `json:"status"`
 }
 
 type updateDueRequest struct {
@@ -48,30 +49,46 @@ func (c *CustomerCreditHTTP) GetForUpdate(ctx context.Context, customerID int32)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return CreditAccount{}, err
+		return CreditAccount{}, fmt.Errorf("customer service unreachable: %w", err)
 	}
 	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return CreditAccount{}, err
+	}
 
 	if resp.StatusCode == http.StatusNotFound {
 		return CreditAccount{}, errors.New("customer not found")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return CreditAccount{}, fmt.Errorf("customer service returned status %d", resp.StatusCode)
+		return CreditAccount{}, fmt.Errorf("customer service returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var body creditSnapshotResponse
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return CreditAccount{}, err
+	if err := json.Unmarshal(bodyBytes, &body); err != nil {
+		return CreditAccount{}, fmt.Errorf("decode customer credit: %w", err)
+	}
+
+	creditLimit, err := rawToString(body.CreditLimit)
+	if err != nil {
+		return CreditAccount{}, fmt.Errorf("invalid credit_limit: %w", err)
 	}
 
 	account := CreditAccount{
 		ID:             body.ID,
-		CreditLimit:    body.CreditLimit,
+		CreditLimit:    creditLimit,
 		PaymentDueDate: body.PaymentDueDate,
 	}
-	if body.TotalDue != nil {
-		account.TotalDue = sql.NullString{String: *body.TotalDue, Valid: true}
+
+	if len(body.TotalDue) > 0 && string(body.TotalDue) != "null" {
+		due, err := rawToString(body.TotalDue)
+		if err != nil {
+			return CreditAccount{}, fmt.Errorf("invalid total_due: %w", err)
+		}
+		account.TotalDue = sql.NullString{String: due, Valid: true}
 	}
+
 	if body.Status != nil {
 		account.Status = *body.Status
 		account.StatusValid = true
@@ -96,12 +113,13 @@ func (c *CustomerCreditHTTP) UpdateDue(ctx context.Context, customerID int32, to
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("customer service unreachable: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("customer service returned status %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("customer service returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 	return nil
 }
@@ -116,12 +134,28 @@ func (c *CustomerCreditHTTP) Block(ctx context.Context, customerID int32) error 
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("customer service unreachable: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("customer service returned status %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("customer service returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 	return nil
+}
+
+func rawToString(raw json.RawMessage) (string, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return "", nil
+	}
+	var asString string
+	if err := json.Unmarshal(raw, &asString); err == nil {
+		return asString, nil
+	}
+	var asNumber json.Number
+	if err := json.Unmarshal(raw, &asNumber); err == nil {
+		return asNumber.String(), nil
+	}
+	return "", fmt.Errorf("unsupported value %s", string(raw))
 }

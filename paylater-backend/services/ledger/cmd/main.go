@@ -1,7 +1,8 @@
-package main
+﻿package main
 
 import (
 	"log"
+	"path/filepath"
 
 	db "paylater/services/ledger/internal/db"
 	"paylater/services/ledger/internal/ledger"
@@ -12,22 +13,19 @@ import (
 )
 
 func main() {
-	config.LoadEnv()
+	config.LoadEnv(
+		filepath.Join("services", "ledger", ".env"),
+		".env",
+		filepath.Join("..", ".env"),
+	)
 
 	conn, err := database.NewMySQLConnection()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	customerServiceURL := config.GetEnv("CUSTOMER_SERVICE_URL")
-	if customerServiceURL == "" {
-		customerServiceURL = "http://localhost:9093"
-	}
-
-	merchantServiceURL := config.GetEnv("MERCHANT_SERVICE_URL")
-	if merchantServiceURL == "" {
-		merchantServiceURL = "http://localhost:9092"
-	}
+	customerServiceURL := config.RequireEnv("CUSTOMER_SERVICE_URL")
+	merchantServiceURL := config.RequireEnv("MERCHANT_SERVICE_URL")
 
 	queries := db.New(conn)
 	ledgerService := ledger.NewService(
@@ -41,11 +39,7 @@ func main() {
 	router := gin.Default()
 	ledger.RegisterRoutes(router, ledgerHandler)
 
-	addr := config.GetEnv("LEDGER_SERVICE_ADDR")
-	if addr == "" {
-		addr = ":9094"
-	}
-
+	addr := config.ListenAddr()
 	log.Println("Ledger service started on", addr)
 	if err := router.Run(addr); err != nil {
 		log.Fatal(err)

@@ -2,15 +2,32 @@
 
 Standalone admin microservice (JWT admin auth, admin CRUD).
 
+## Configuration
+
+Copy `.env.example` → `.env` in this directory.
+
+| Variable | Purpose |
+|----------|---------|
+| `PORT` | Listen port |
+| `DB_*` | MySQL connection (shared `paylater` DB for now) |
+| `JWT_SECRET` | Must match other services |
+| `JWT_EXPIRY` | Token lifetime (e.g. `24h`) |
+| `INTERNAL_SERVICE_TOKEN` | Reserved for Phase 10; unused today |
+
 ## Run locally
 
+From this directory:
+
 ```bash
-cd services/admin
-cp .env.example .env
+cp .env.example .env   # first time only
 go run ./cmd
 ```
 
-Default listen address: `:9091`.
+From repo root:
+
+```bash
+go run ./services/admin/cmd
+```
 
 ## Docker
 

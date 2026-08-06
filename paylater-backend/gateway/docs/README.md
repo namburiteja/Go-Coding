@@ -1,7 +1,8 @@
 ﻿# Gateway docs
 
-API gateway for PayLater Phase 4. Proxies admin and merchant microservices and hosts remaining customer, ledger, and report routes until those services are extracted.
+Pure API edge for PayLater. Proxies all public routes to domain services.
 
-- Default listen address: `:9090`
-- Upstream: `ADMIN_SERVICE_URL`, `MERCHANT_SERVICE_URL`
-- Build from repo root: `docker build -f gateway/Dockerfile .`
+- Listen address: `PORT` from `gateway/.env`
+- Upstreams: `ADMIN_SERVICE_URL`, `MERCHANT_SERVICE_URL`, `CUSTOMER_SERVICE_URL`, `LEDGER_SERVICE_URL`, `REPORT_SERVICE_URL`
+- No database configuration
+- Build from repo root: `docker build -f gateway/Dockerfile .` (when Dockerfile is added)

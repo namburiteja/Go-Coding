@@ -13,7 +13,7 @@ const getAllMerchantsFeeCollected = `-- name: GetAllMerchantsFeeCollected :many
 SELECT
     m.id,
     m.name,
-    COALESCE(SUM(t.commission_amount), 0) AS total_fee_collected
+    CAST(COALESCE(SUM(t.commission_amount), 0) AS CHAR) AS total_fee_collected
 FROM merchants m
 LEFT JOIN transactions t
     ON m.id = t.merchant_id
@@ -22,9 +22,9 @@ ORDER BY total_fee_collected DESC
 `
 
 type GetAllMerchantsFeeCollectedRow struct {
-	ID                int32       `json:"id"`
-	Name              string      `json:"name"`
-	TotalFeeCollected interface{} `json:"total_fee_collected"`
+	ID                int32  `json:"id"`
+	Name              string `json:"name"`
+	TotalFeeCollected string `json:"total_fee_collected"`
 }
 
 func (q *Queries) GetAllMerchantsFeeCollected(ctx context.Context) ([]GetAllMerchantsFeeCollectedRow, error) {

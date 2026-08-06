@@ -21,3 +21,8 @@ type CommissionResponse struct {
 	ID                   int32   `json:"id"`
 	CommissionPercentage *string `json:"commission_percentage"`
 }
+
+// UpdateCommissionRequest is the public body for PUT /merchants/:id/commission.
+type UpdateCommissionRequest struct {
+	CommissionPercentage string `json:"commission_percentage" binding:"required"`
+}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -20,14 +21,14 @@ func NewMerchantCommissionHTTP(baseURL string) *MerchantCommissionHTTP {
 	return &MerchantCommissionHTTP{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: 10 * time.Second,
 		},
 	}
 }
 
 type commissionResponse struct {
-	ID                   int32   `json:"id"`
-	CommissionPercentage *string `json:"commission_percentage"`
+	ID                   int32           `json:"id"`
+	CommissionPercentage json.RawMessage `json:"commission_percentage"`
 }
 
 func (c *MerchantCommissionHTTP) GetCommission(ctx context.Context, merchantID int32) (MerchantCommission, error) {
@@ -40,26 +41,35 @@ func (c *MerchantCommissionHTTP) GetCommission(ctx context.Context, merchantID i
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return MerchantCommission{}, err
+		return MerchantCommission{}, fmt.Errorf("merchant service unreachable: %w", err)
 	}
 	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return MerchantCommission{}, err
+	}
 
 	if resp.StatusCode == http.StatusNotFound {
 		return MerchantCommission{}, errors.New("merchant not found")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return MerchantCommission{}, fmt.Errorf("merchant service returned status %d", resp.StatusCode)
+		return MerchantCommission{}, fmt.Errorf("merchant service returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var body commissionResponse
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return MerchantCommission{}, err
+	if err := json.Unmarshal(bodyBytes, &body); err != nil {
+		return MerchantCommission{}, fmt.Errorf("decode merchant commission: %w", err)
 	}
 
 	commission := MerchantCommission{ID: body.ID}
-	if body.CommissionPercentage != nil {
+	if len(body.CommissionPercentage) > 0 && string(body.CommissionPercentage) != "null" {
+		percentage, err := rawToString(body.CommissionPercentage)
+		if err != nil {
+			return MerchantCommission{}, fmt.Errorf("invalid commission_percentage: %w", err)
+		}
 		commission.CommissionPercentage = sql.NullString{
-			String: *body.CommissionPercentage,
+			String: percentage,
 			Valid:  true,
 		}
 	}

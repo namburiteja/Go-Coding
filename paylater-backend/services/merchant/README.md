@@ -12,7 +12,7 @@ Copy `.env.example` → `.env` in this directory.
 | `DB_*` | MySQL connection (shared `paylater` DB for now) |
 | `JWT_SECRET` | Must match other services |
 | `JWT_EXPIRY` | Token lifetime for merchant login |
-| `INTERNAL_SERVICE_TOKEN` | Reserved for Phase 10; unused today |
+| `INTERNAL_SERVICE_TOKEN` | Protects `/internal/*`; must match Ledger |
 
 ## Run
 
@@ -30,6 +30,8 @@ go run ./services/merchant/cmd
 ```
 
 ## Internal API (Ledger)
+
+Require header `X-Internal-Service-Token: <INTERNAL_SERVICE_TOKEN>` (not end-user JWT).
 
 `GET /internal/merchants/:id/commission` — commission snapshot for purchase fees (not proxied by gateway).
 

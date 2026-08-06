@@ -77,8 +77,12 @@ func RegisterRoutes(router *gin.Engine, h *Handler) {
 		)
 	}
 
-	// Service-to-service: Ledger reads commission without end-user JWT.
-	router.GET("/internal/merchants/:id/commission", h.GetCommissionInternal)
+	// Service-to-service: Ledger reads commission with INTERNAL_SERVICE_TOKEN (not end-user JWT).
+	router.GET(
+		"/internal/merchants/:id/commission",
+		middleware.InternalServiceAuth(),
+		h.GetCommissionInternal,
+	)
 }
 
 func (h *Handler) RegisterMerchant(c *gin.Context) {

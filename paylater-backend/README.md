@@ -25,6 +25,7 @@ paylater/
 - Each process loads **only its own** `.env` (under `gateway/` or `services/<name>/`).
 - All services still use the shared MySQL database `paylater` (`DB_NAME`). Database-per-service comes in a later phase.
 - Use the **same** `JWT_SECRET` in every service that issues or validates tokens.
+- Use the **same** `INTERNAL_SERVICE_TOKEN` for all service-to-service calls (`X-Internal-Service-Token`). End-user JWT is never used for `/internal/*`.
 
 ## Configuration
 

@@ -69,7 +69,7 @@ func RegisterRoutes(router *gin.Engine, h *Handler) {
 		)
 	}
 
-	internal := router.Group("/internal/customers")
+	internal := router.Group("/internal/customers", middleware.InternalServiceAuth())
 	{
 		internal.GET("/:id/credit", h.GetCreditInternal)
 		internal.PUT("/:id/due", h.UpdateDueInternal)

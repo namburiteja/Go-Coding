@@ -12,7 +12,7 @@ Copy `.env.example` → `.env` in this directory.
 | `DB_*` | MySQL connection (shared `paylater` DB for now) |
 | `JWT_SECRET` | Must match other services |
 | `JWT_EXPIRY` | Token lifetime (e.g. `24h`) |
-| `INTERNAL_SERVICE_TOKEN` | Reserved for Phase 10; unused today |
+| `INTERNAL_SERVICE_TOKEN` | Shared S2S token (for future internal APIs) |
 
 ## Run locally
 

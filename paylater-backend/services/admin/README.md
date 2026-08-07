@@ -9,7 +9,7 @@ Copy `.env.example` → `.env` in this directory.
 | Variable | Purpose |
 |----------|---------|
 | `PORT` | Listen port |
-| `DB_*` | MySQL connection (shared `paylater` DB for now) |
+| `DB_*` | MySQL connection (`DB_NAME=admin_db`, owns `admins` only) |
 | `JWT_SECRET` | Must match other services |
 | `JWT_EXPIRY` | Token lifetime (e.g. `24h`) |
 | `INTERNAL_SERVICE_TOKEN` | Shared S2S token (for future internal APIs) |

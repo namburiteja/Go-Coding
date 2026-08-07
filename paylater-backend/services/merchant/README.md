@@ -9,7 +9,7 @@ Copy `.env.example` → `.env` in this directory.
 | Variable | Purpose |
 |----------|---------|
 | `PORT` | Listen port |
-| `DB_*` | MySQL connection (shared `paylater` DB for now) |
+| `DB_*` | MySQL connection (`DB_NAME=merchant_db`, owns `merchants` only) |
 | `JWT_SECRET` | Must match other services |
 | `JWT_EXPIRY` | Token lifetime for merchant login |
 | `INTERNAL_SERVICE_TOKEN` | Protects `/internal/*`; must match Ledger |

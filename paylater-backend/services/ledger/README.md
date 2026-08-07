@@ -9,7 +9,7 @@ Copy `.env.example` → `.env` in this directory.
 | Variable | Purpose |
 |----------|---------|
 | `PORT` | Listen port |
-| `DB_*` | MySQL connection (shared `paylater` DB for now) |
+| `DB_*` | MySQL connection (`DB_NAME=ledger_db`, owns `transactions` only) |
 | `JWT_SECRET` | Must match other services (validates customer/merchant/admin JWTs) |
 | `CUSTOMER_SERVICE_URL` | Base URL for credit/due/block internal APIs |
 | `MERCHANT_SERVICE_URL` | Base URL for commission internal API |

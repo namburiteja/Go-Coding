@@ -7,11 +7,11 @@ Go workspace monorepo for a pay-later backend: five domain services behind a pur
 ```
 paylater/
 ├── services/
-│   ├── admin/       # :9091 — auth, admin ops
-│   ├── merchant/    # :9092 — merchants
-│   ├── customer/    # :9093 — customers & credit
-│   ├── ledger/      # :9094 — transactions & payments
-│   └── report/      # :9095 — analytics / reports
+│   ├── admin/       # :9091 — auth, admin ops → admin_db
+│   ├── merchant/    # :9092 — merchants → merchant_db
+│   ├── customer/    # :9093 — customers & credit → customer_db
+│   ├── ledger/      # :9094 — transactions & payments → ledger_db
+│   └── report/      # :9095 — analytics aggregator (no database)
 ├── gateway/         # :9090 — edge proxy only (no domain DB)
 ├── shared/
 ├── deployments/
@@ -21,22 +21,36 @@ paylater/
 ## Architecture
 
 - **Gateway** is a pure edge: routing and proxy to downstream services only.
-- Domain logic and SQL live in the five services under `services/`.
+- Domain logic and SQL live under `services/` (except Report).
 - Each process loads **only its own** `.env` (under `gateway/` or `services/<name>/`).
-- Report is an **aggregator**: it has no MySQL connection and calls Customer/Merchant/Ledger over internal HTTP.
-- All other business services still use the shared MySQL database `paylater` (`DB_NAME`). Database-per-service comes in a later phase.
+- **Database-per-service:** Admin, Merchant, Customer, and Ledger each connect to a dedicated MySQL database. No service may query another service's database.
+- **Report** is an aggregator: no MySQL connection; it calls Customer/Merchant/Ledger over authenticated internal HTTP.
+- Cross-domain reads/writes use internal REST (`X-Internal-Service-Token`), never cross-database SQL.
 - Use the **same** `JWT_SECRET` in every service that issues or validates tokens.
-- Use the **same** `INTERNAL_SERVICE_TOKEN` for all service-to-service calls (`X-Internal-Service-Token`). End-user JWT is never used for `/internal/*`.
+- Use the **same** `INTERNAL_SERVICE_TOKEN` for all service-to-service calls.
+
+## Databases
+
+| Service | `DB_NAME` | Schema file |
+|---------|-----------|-------------|
+| Admin | `admin_db` | `services/admin/sql/schema/admins.sql` |
+| Merchant | `merchant_db` | `services/merchant/sql/schema/merchants.sql` |
+| Customer | `customer_db` | `services/customer/sql/schema/customers.sql` |
+| Ledger | `ledger_db` | `services/ledger/sql/schema/transactions.sql` |
+| Report | — | none |
+| Gateway | — | none |
+
+Create and initialize databases manually (see `deployments/README.md`). The app does **not** auto-create databases.
 
 ## Configuration
 
 | Process | Config file | Notes |
 |---------|-------------|--------|
 | Gateway | `gateway/.env` | `PORT` + upstream `*_SERVICE_URL` only (no DB) |
-| Admin | `services/admin/.env` | `PORT`, `DB_*`, `JWT_*`, `INTERNAL_SERVICE_TOKEN` |
-| Merchant | `services/merchant/.env` | same pattern |
-| Customer | `services/customer/.env` | same pattern |
-| Ledger | `services/ledger/.env` | plus `CUSTOMER_SERVICE_URL`, `MERCHANT_SERVICE_URL` |
+| Admin | `services/admin/.env` | `PORT`, `DB_*` (`DB_NAME=admin_db`), `JWT_*`, `INTERNAL_SERVICE_TOKEN` |
+| Merchant | `services/merchant/.env` | `DB_NAME=merchant_db` |
+| Customer | `services/customer/.env` | `DB_NAME=customer_db` |
+| Ledger | `services/ledger/.env` | `DB_NAME=ledger_db` + `CUSTOMER_SERVICE_URL`, `MERCHANT_SERVICE_URL` |
 | Report | `services/report/.env` | `PORT`, `JWT_SECRET`, upstream URLs, `INTERNAL_SERVICE_TOKEN` (no `DB_*`) |
 
 Copy each `.env.example` → `.env` before the first run (examples are committed; `.env` is gitignored).

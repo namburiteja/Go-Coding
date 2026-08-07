@@ -1,0 +1,140 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+
+    ports:
+      - "3307:3306"
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./deployments/mysql/init:/docker-entrypoint-initdb.d
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot123"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - paylater-network
+
+  customer:
+    image: tejanamburi13/paylater-customer:v1.0.0
+    container_name: customer-service
+
+    env_file:
+      - services/customer/.env
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    ports:
+      - "9093:9093"
+
+    networks:
+      - paylater-network
+
+  merchant:
+    image: tejanamburi13/paylater-merchant:v1.0.0
+    container_name: merchant-service
+
+    env_file:
+      - services/merchant/.env
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    ports:
+      - "9092:9092"
+
+    networks:
+      - paylater-network
+
+  admin:
+    image: tejanamburi13/paylater-admin:v1.0.0
+    container_name: admin-service
+
+    env_file:
+      - services/admin/.env
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    ports:
+      - "9091:9091"
+
+    networks:
+      - paylater-network
+
+  ledger:
+    image: tejanamburi13/paylater-ledger:v1.0.0
+    container_name: ledger-service
+
+    env_file:
+      - services/ledger/.env
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    ports:
+      - "9094:9094"
+
+    networks:
+      - paylater-network
+
+  report:
+    image: tejanamburi13/paylater-report:v1.0.0
+    container_name: report-service
+
+    env_file:
+      - services/report/.env
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    ports:
+      - "9095:9095"
+
+    networks:
+      - paylater-network
+
+  gateway:
+    image: tejanamburi13/paylater-gateway:v1.0.0
+    container_name: gateway
+
+    env_file:
+      - gateway/.env
+
+    depends_on:
+      customer:
+        condition: service_started
+      merchant:
+        condition: service_started
+      admin:
+        condition: service_started
+      ledger:
+        condition: service_started
+      report:
+        condition: service_started
+
+    ports:
+      - "9090:9090"
+
+    networks:
+      - paylater-network
+
+networks:
+  paylater-network:
+
+volumes:
+  mysql-data:
+    external: true

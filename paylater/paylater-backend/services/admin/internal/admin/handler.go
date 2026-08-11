@@ -56,7 +56,7 @@ func (h *Handler) GetAllAdmins(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, admins)
+	c.JSON(http.StatusOK, toAdminResponses(admins))
 }
 
 func (h *Handler) GetAdminByID(c *gin.Context) {
@@ -72,7 +72,7 @@ func (h *Handler) GetAdminByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, admin)
+	c.JSON(http.StatusOK, toAdminResponse(admin))
 }
 
 func (h *Handler) UpdateAdmin(c *gin.Context) {

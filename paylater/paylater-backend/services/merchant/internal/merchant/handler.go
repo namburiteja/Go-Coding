@@ -59,7 +59,7 @@ func (h *Handler) GetMyProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, merchant)
+	c.JSON(http.StatusOK, toMerchantResponse(merchant))
 }
 
 func (h *Handler) UpdateMyProfile(c *gin.Context) {
@@ -97,7 +97,7 @@ func (h *Handler) GetMerchantByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, merchant)
+	c.JSON(http.StatusOK, toMerchantResponse(merchant))
 }
 
 func (h *Handler) GetAllMerchants(c *gin.Context) {
@@ -107,7 +107,7 @@ func (h *Handler) GetAllMerchants(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, merchants)
+	c.JSON(http.StatusOK, toMerchantResponses(merchants))
 }
 
 func (h *Handler) UpdateMerchantCommission(c *gin.Context) {

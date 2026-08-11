@@ -59,7 +59,7 @@ func (h *Handler) GetMyProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, customer)
+	c.JSON(http.StatusOK, toCustomerResponse(customer))
 }
 
 func (h *Handler) UpdateMyProfile(c *gin.Context) {
@@ -97,7 +97,7 @@ func (h *Handler) GetCustomerByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, customer)
+	c.JSON(http.StatusOK, toCustomerResponse(customer))
 }
 
 func (h *Handler) GetAllCustomers(c *gin.Context) {
@@ -107,7 +107,7 @@ func (h *Handler) GetAllCustomers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, customers)
+	c.JSON(http.StatusOK, toCustomerResponses(customers))
 }
 
 func (h *Handler) UpdateCustomer(c *gin.Context) {
@@ -212,7 +212,7 @@ func (h *Handler) GetUsersAtCreditLimitInternal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, toCustomerResponses(users))
 }
 
 func (h *Handler) GetCustomersWithDueInternal(c *gin.Context) {
@@ -221,7 +221,7 @@ func (h *Handler) GetCustomersWithDueInternal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, customers)
+	c.JSON(http.StatusOK, toCustomerResponses(customers))
 }
 
 func (h *Handler) GetCustomerDueByNameInternal(c *gin.Context) {
@@ -235,7 +235,7 @@ func (h *Handler) GetCustomerDueByNameInternal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, customer)
+	c.JSON(http.StatusOK, toCustomerResponse(customer))
 }
 
 func toCreditSnapshot(customer db.Customer) CreditSnapshotResponse {

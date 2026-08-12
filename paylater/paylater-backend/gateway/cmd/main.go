@@ -4,6 +4,7 @@ import (
 	"log"
 	"path/filepath"
 
+	"paylater/gateway/internal/middleware"
 	"paylater/gateway/internal/routes"
 	"paylater/shared/config"
 
@@ -26,6 +27,7 @@ func main() {
 	addr := config.ListenAddr()
 
 	router := gin.Default()
+	router.Use(middleware.CORS())
 	routes.SetupRoutes(
 		router,
 		adminServiceURL,

@@ -35,6 +35,15 @@ func RegisterRoutes(router *gin.Engine, h *Handler) {
 			h.UpdateMyProfile,
 		)
 
+		// Lightweight merchant picker for customer purchase UI (id + name only).
+		// Registered before /:id so "options" is not treated as an id.
+		merchants.GET(
+			"/options",
+			middleware.AuthMiddleware(),
+			middleware.CustomerOnly(),
+			h.ListMerchantOptions,
+		)
+
 		merchants.PUT(
 			"/:id/commission",
 			middleware.AuthMiddleware(),

@@ -207,8 +207,17 @@ func (h *Handler) GetCommissionInternal(c *gin.Context) {
 	})
 }
 
+// ListMerchantOptions returns id+name for authenticated customers (purchase dropdown).
+func (h *Handler) ListMerchantOptions(c *gin.Context) {
+	h.respondMerchantNames(c)
+}
+
 // GetMerchantNamesInternal is called by Report over REST (not exposed via gateway).
 func (h *Handler) GetMerchantNamesInternal(c *gin.Context) {
+	h.respondMerchantNames(c)
+}
+
+func (h *Handler) respondMerchantNames(c *gin.Context) {
 	names, err := h.service.GetMerchantNames(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

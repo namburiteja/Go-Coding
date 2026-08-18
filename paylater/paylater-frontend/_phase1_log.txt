@@ -1,0 +1,23 @@
+PATH=/home/teja/.nvm/versions/node/v24.19.0/bin:/snap/bin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Users/tejan/AppData/Local/Programs/cursor/resources/app/node_modules/@vscode/ripgrep/bin:/mnt/c/Users/tejan/AppData/Local/Programs/Eclipse Adoptium/jdk-17.0.17.10-hotspot/bin:/mnt/c/Program Files/Common Files/Oracle/Java/javapath:/mnt/c/windows/system32:/mnt/c/windows:/mnt/c/windows/System32/Wbem:/mnt/c/windows/System32/WindowsPowerShell/v1.0/:/mnt/c/windows/System32/OpenSSH/:/mnt/c/Program Files/nodejs/:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files (x86)/Java/jdk1.7.0_51/bin:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Users/tejan/GitHub CLI/:/mnt/c/Program Files/MongoDB/Server/8.0/bin:/mnt/c/Program Files/WireGuard/:/mnt/c/Users/tejan/AppData/Local/Programs/Eclipse Adoptium/jdk-17.0.17.10-hotspot/bin:/mnt/c/Users/tejan/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/tejan/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/tejan/AppData/Local/Programs/Python/Python312/Scripts/:/mnt/c/Users/tejan/AppData/Local/Programs/Python/Python312/:/mnt/c/Program Files/MySQL/MySQL Shell 8.0/bin/:/mnt/c/Users/tejan/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/tejan/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/tejan/AppData/Roaming/npm:/mnt/c/Users/tejan/Downloads/jdk-22_windows-x64_bin/jdk-22.0.2/bin:/mnt/c/Program Files/Java/jdk-24:/mnt/c/Program Files/JetBrains/IntelliJ IDEA 2025.3.1/bin:/mnt/c/Users/tejan/AppData/Local/Kingsoft/WPS Office/12.1.0.27458/clitool:/mnt/c/Users/tejan/AppData/Local/Programs/cursor/resources/app/bin:/Docker/host/bin
+/home/teja/.nvm/versions/node/v24.19.0/bin/npm
+
+added 41 packages, and audited 194 packages in 11s
+
+52 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+=== LINT ===
+
+> paylater-frontend@0.0.0 lint
+> eslint .
+
+
+/home/teja/Developer/go/learning/paylater/paylater-frontend/src/context/AuthContext.tsx
+  89:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/home/teja/Developer/go/learning/paylater/paylater-frontend/src/routes/ProtectedRoute.tsx
+  3:10  error  'dashboardPathForRole' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 2 problems (2 errors, 0 warnings)
+

@@ -1,8 +1,4 @@
-import type {
-  DerivedMerchantCustomer,
-  MerchantSettlementSummary,
-  MerchantTransaction,
-} from '../types/merchant'
+import type { DerivedMerchantCustomer, MerchantSettlementSummary, MerchantTransaction, } from '../types/merchant'
 import { parseAmount } from './credit'
 
 /** Settlement figures derived from merchant purchase transactions (no separate settlement API). */

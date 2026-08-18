@@ -3,11 +3,11 @@ import { useAuth } from '../context/useAuth'
 import type { Role } from '../types/auth'
 import { dashboardPathForRole } from '../utils/jwt'
 
-interface RoleRouteProps {
-  allow: Role
-}
+// interface RoleRouteProps {
+//   allow: Role
+// }
 
-export function RoleRoute({ allow }: RoleRouteProps) {
+export function RoleRoute({ allow }: { allow: Role }) {
   const { isAuthenticated, role } = useAuth()
 
   if (!isAuthenticated || !role) {

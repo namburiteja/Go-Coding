@@ -12,7 +12,7 @@ export function summarizeAdminDashboard(
   let totalPurchaseVolume = 0
   let totalFees = 0
 
-  for (const tx of transactions) {
+  for (const tx of transactions) { //go through each transactions one by one and summarize the stats
     if (tx.transaction_type === 'PURCHASE') {
       purchaseCount += 1
       totalPurchaseVolume += parseAmount(tx.amount)

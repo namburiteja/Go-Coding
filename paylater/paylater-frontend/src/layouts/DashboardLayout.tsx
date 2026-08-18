@@ -48,8 +48,8 @@ export function DashboardLayout({ role, title }: DashboardLayoutProps) {
   }
 
   function handleLogout() {
-    logout()
-    navigate('/', { replace: true })
+    logout() //remove authentication/session state
+    navigate('/', { replace: true }) // replace:true makes current history entry to be replaced with the new one, so that user cannot go back to the previous page using the back button
   }
 
   return (

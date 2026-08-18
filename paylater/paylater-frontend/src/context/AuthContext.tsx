@@ -1,18 +1,6 @@
-import {
-  useCallback,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useMemo, useState, type ReactNode, } from 'react'
 import type { AuthUser } from '../types/auth'
-import {
-  clearStoredToken,
-  decodeJwt,
-  getStoredToken,
-  isTokenExpired,
-  isValidRole,
-  setStoredToken,
-} from '../utils/jwt'
+import { clearStoredToken, decodeJwt, getStoredToken, isTokenExpired, isValidRole, setStoredToken, } from '../utils/jwt'
 import { AuthContext } from './auth-context'
 
 function userFromToken(token: string): AuthUser | null {
@@ -21,9 +9,9 @@ function userFromToken(token: string): AuthUser | null {
     return null
   }
   return {
-    token,
     userId: claims.user_id,
     role: claims.role,
+    token
   }
 }
 

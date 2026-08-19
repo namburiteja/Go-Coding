@@ -166,3 +166,59 @@ func (q *Queries) GetPersonByID(ctx context.Context, playerid string) (Person, e
 	)
 	return i, err
 }
+
+const searchPeopleByName = `-- name: SearchPeopleByName :many
+SELECT playerid, birthyear, birthmonth, birthday, birthcountry, birthstate, birthcity, deathyear, deathmonth, deathday, deathcountry, deathstate, deathcity, namefirst, namelast, namegiven, weight, height, bats, throws, debut, finalgame, retroid, bbrefid
+FROM people
+WHERE CONCAT(nameFirst, ' ', nameLast) LIKE CONCAT('%', ?, '%')
+ORDER BY nameFirst, nameLast
+LIMIT 20
+`
+
+func (q *Queries) SearchPeopleByName(ctx context.Context, concat interface{}) ([]Person, error) {
+	rows, err := q.db.QueryContext(ctx, searchPeopleByName, concat)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Person
+	for rows.Next() {
+		var i Person
+		if err := rows.Scan(
+			&i.Playerid,
+			&i.Birthyear,
+			&i.Birthmonth,
+			&i.Birthday,
+			&i.Birthcountry,
+			&i.Birthstate,
+			&i.Birthcity,
+			&i.Deathyear,
+			&i.Deathmonth,
+			&i.Deathday,
+			&i.Deathcountry,
+			&i.Deathstate,
+			&i.Deathcity,
+			&i.Namefirst,
+			&i.Namelast,
+			&i.Namegiven,
+			&i.Weight,
+			&i.Height,
+			&i.Bats,
+			&i.Throws,
+			&i.Debut,
+			&i.Finalgame,
+			&i.Retroid,
+			&i.Bbrefid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

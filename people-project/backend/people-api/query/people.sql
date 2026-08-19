@@ -63,3 +63,12 @@ WHERE playerID = ?;
 -- name: CountPeople :one
 SELECT COUNT(*)
 FROM people;
+
+
+-- name: SearchPeopleByName :many
+SELECT *
+FROM people
+WHERE CONCAT(nameFirst, ' ', nameLast) LIKE CONCAT('%', ?, '%')
+ORDER BY nameFirst, nameLast
+LIMIT 20;
+

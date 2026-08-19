@@ -80,3 +80,22 @@ func (s *PersonService) GetPeopleByID(
 func (s *PersonService) CountPeople(ctx context.Context) (int64, error) {
 	return s.Queries.CountPeople(ctx)
 }
+
+func (s *PersonService) SearchPeopleByName(
+	ctx context.Context,
+	name string,
+) ([]dto.PersonDTO, error) {
+
+	people, err := s.Queries.SearchPeopleByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.PersonDTO, 0, len(people))
+
+	for _, person := range people {
+		result = append(result, dto.ToPersonDTO(person))
+	}
+
+	return result, nil
+}

@@ -633,3 +633,66 @@ input {
     grid-template-columns: 1fr;
   }
 }
+
+/* =================================
+   SEARCH WRAPPER
+================================= */
+
+.search-wrapper {
+  position: relative;
+
+  width: 100%;
+
+  margin-bottom: 16px;
+}
+
+/*
+ * The existing search-bar already
+ * contains all our good styling.
+ *
+ * We only remove its old bottom
+ * margin because the wrapper handles it.
+ */
+
+.search-wrapper .search-bar {
+  margin-bottom: 0;
+}
+
+/* =================================
+   CLEAR SEARCH BUTTON
+================================= */
+
+.search-clear {
+  flex-shrink: 0;
+
+  width: 42px;
+  height: 42px;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #9ca3af;
+
+  font-size: 22px;
+
+  line-height: 42px;
+
+  text-align: center;
+
+  cursor: pointer;
+
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.search-clear:hover {
+  color: #374151;
+
+  background: #f8fafc;
+}

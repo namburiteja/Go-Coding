@@ -30,6 +30,7 @@ func main() {
 
 	// 5. Register routes
 	http.HandleFunc("/people", personHandler.GetAllPeople)
+	http.HandleFunc("/people/search", personHandler.SearchPeopleByName)
 	http.HandleFunc("/people/", personHandler.GetPeopleByID)
 
 	log.Println("Server running on http://localhost:8090")

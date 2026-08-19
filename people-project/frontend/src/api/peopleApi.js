@@ -20,3 +20,13 @@ export const getPersonById = async (playerID) => {
 
   return response.data;
 };
+
+export const searchPeopleByName = async (name) => {
+  const response = await API.get("/people/search", {
+    params: {
+      name,
+    },
+  });
+
+  return response.data;
+};

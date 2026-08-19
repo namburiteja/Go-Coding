@@ -120,3 +120,43 @@ func (h *PersonHandler) GetPeopleByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(person)
 }
+
+func (h *PersonHandler) SearchPeopleByName(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	name := strings.TrimSpace(
+		r.URL.Query().Get("name"),
+	)
+
+	if len(name) < 2 {
+		http.Error(
+			w,
+			"Search requires at least 2 characters",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	people, err := h.Service.SearchPeopleByName(
+		r.Context(),
+		name,
+	)
+
+	if err != nil {
+		log.Println("SearchPeopleByName error:", err)
+		http.Error(
+			w,
+			"Failed to search people",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	w.Header().Set(
+		"Content-Type",
+		"application/json",
+	)
+
+	json.NewEncoder(w).Encode(people)
+}

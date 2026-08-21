@@ -696,3 +696,169 @@ input {
 
   background: #f8fafc;
 }
+
+.infinite-scroll-sentinel {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.virtual-table-card {
+  overflow: hidden;
+}
+
+.virtual-header,
+.virtual-row {
+  display: grid;
+  grid-template-columns:
+    1.2fr
+    1fr
+    1fr
+    1fr
+    1.2fr
+    1.2fr;
+  align-items: center;
+}
+
+.virtual-header {
+  min-height: 50px;
+  font-weight: 600;
+  padding: 0 16px;
+}
+
+.virtual-row {
+  padding: 0 16px;
+  cursor: pointer;
+}
+
+.virtual-row:hover {
+  background: #f8fafc;
+}
+
+.virtual-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =================================
+   LOAD MORE
+================================= */
+
+.load-more-container {
+  flex-shrink: 0;
+
+  display: flex;
+
+  justify-content: center;
+
+  padding: 16px 0 4px;
+}
+
+.load-more-button {
+  padding: 10px 24px;
+
+  border: 1px solid #2563eb;
+
+  border-radius: 8px;
+
+  background: #2563eb;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.load-more-button:hover:not(:disabled) {
+  background: #1d4ed8;
+
+  transform: translateY(-1px);
+}
+
+.load-more-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+.edit-button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background: #1d4ed8;
+}
+
+.detail-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.detail-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.cancel-button {
+  padding: 10px 18px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background: #f3f4f6;
+}
+
+.save-button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #16a34a;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.save-button:hover {
+  background: #15803d;
+}
+
+.save-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

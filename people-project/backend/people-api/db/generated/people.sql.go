@@ -7,6 +7,7 @@ package generated
 
 import (
 	"context"
+	"database/sql"
 )
 
 const countPeople = `-- name: CountPeople :one
@@ -19,6 +20,170 @@ func (q *Queries) CountPeople(ctx context.Context) (int64, error) {
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const getPeopleCursorAfter = `-- name: GetPeopleCursorAfter :many
+SELECT
+    playerID,
+    birthYear,
+    birthMonth,
+    birthDay,
+    birthCountry,
+    birthState,
+    birthCity,
+    deathYear,
+    deathMonth,
+    deathDay,
+    deathCountry,
+    deathState,
+    deathCity,
+    nameFirst,
+    nameLast,
+    nameGiven,
+    weight,
+    height,
+    bats,
+    throws,
+    debut,
+    finalGame,
+    retroID,
+    bbrefID
+FROM people
+WHERE playerID > ?
+ORDER BY playerID
+LIMIT ?
+`
+
+type GetPeopleCursorAfterParams struct {
+	Playerid string
+	Limit    int32
+}
+
+func (q *Queries) GetPeopleCursorAfter(ctx context.Context, arg GetPeopleCursorAfterParams) ([]Person, error) {
+	rows, err := q.db.QueryContext(ctx, getPeopleCursorAfter, arg.Playerid, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Person
+	for rows.Next() {
+		var i Person
+		if err := rows.Scan(
+			&i.Playerid,
+			&i.Birthyear,
+			&i.Birthmonth,
+			&i.Birthday,
+			&i.Birthcountry,
+			&i.Birthstate,
+			&i.Birthcity,
+			&i.Deathyear,
+			&i.Deathmonth,
+			&i.Deathday,
+			&i.Deathcountry,
+			&i.Deathstate,
+			&i.Deathcity,
+			&i.Namefirst,
+			&i.Namelast,
+			&i.Namegiven,
+			&i.Weight,
+			&i.Height,
+			&i.Bats,
+			&i.Throws,
+			&i.Debut,
+			&i.Finalgame,
+			&i.Retroid,
+			&i.Bbrefid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPeopleCursorFirst = `-- name: GetPeopleCursorFirst :many
+SELECT
+    playerID,
+    birthYear,
+    birthMonth,
+    birthDay,
+    birthCountry,
+    birthState,
+    birthCity,
+    deathYear,
+    deathMonth,
+    deathDay,
+    deathCountry,
+    deathState,
+    deathCity,
+    nameFirst,
+    nameLast,
+    nameGiven,
+    weight,
+    height,
+    bats,
+    throws,
+    debut,
+    finalGame,
+    retroID,
+    bbrefID
+FROM people
+ORDER BY playerID
+LIMIT ?
+`
+
+func (q *Queries) GetPeopleCursorFirst(ctx context.Context, limit int32) ([]Person, error) {
+	rows, err := q.db.QueryContext(ctx, getPeopleCursorFirst, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Person
+	for rows.Next() {
+		var i Person
+		if err := rows.Scan(
+			&i.Playerid,
+			&i.Birthyear,
+			&i.Birthmonth,
+			&i.Birthday,
+			&i.Birthcountry,
+			&i.Birthstate,
+			&i.Birthcity,
+			&i.Deathyear,
+			&i.Deathmonth,
+			&i.Deathday,
+			&i.Deathcountry,
+			&i.Deathstate,
+			&i.Deathcity,
+			&i.Namefirst,
+			&i.Namelast,
+			&i.Namegiven,
+			&i.Weight,
+			&i.Height,
+			&i.Bats,
+			&i.Throws,
+			&i.Debut,
+			&i.Finalgame,
+			&i.Retroid,
+			&i.Bbrefid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getPeoplePaginated = `-- name: GetPeoplePaginated :many
@@ -59,6 +224,308 @@ type GetPeoplePaginatedParams struct {
 
 func (q *Queries) GetPeoplePaginated(ctx context.Context, arg GetPeoplePaginatedParams) ([]Person, error) {
 	rows, err := q.db.QueryContext(ctx, getPeoplePaginated, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Person
+	for rows.Next() {
+		var i Person
+		if err := rows.Scan(
+			&i.Playerid,
+			&i.Birthyear,
+			&i.Birthmonth,
+			&i.Birthday,
+			&i.Birthcountry,
+			&i.Birthstate,
+			&i.Birthcity,
+			&i.Deathyear,
+			&i.Deathmonth,
+			&i.Deathday,
+			&i.Deathcountry,
+			&i.Deathstate,
+			&i.Deathcity,
+			&i.Namefirst,
+			&i.Namelast,
+			&i.Namegiven,
+			&i.Weight,
+			&i.Height,
+			&i.Bats,
+			&i.Throws,
+			&i.Debut,
+			&i.Finalgame,
+			&i.Retroid,
+			&i.Bbrefid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPeoplePaginatedSorted = `-- name: GetPeoplePaginatedSorted :many
+SELECT
+    playerID,
+    birthYear,
+    birthMonth,
+    birthDay,
+    birthCountry,
+    birthState,
+    birthCity,
+    deathYear,
+    deathMonth,
+    deathDay,
+    deathCountry,
+    deathState,
+    deathCity,
+    nameFirst,
+    nameLast,
+    nameGiven,
+    weight,
+    height,
+    bats,
+    throws,
+    debut,
+    finalGame,
+    retroID,
+    bbrefID
+FROM people
+ORDER BY
+    CASE
+        WHEN ? = 'nameFirst'
+             AND ? = 'asc'
+        THEN nameFirst
+    END ASC,
+
+    CASE
+        WHEN ? = 'nameFirst'
+             AND ? = 'desc'
+        THEN nameFirst
+    END DESC,
+
+    CASE
+        WHEN ? = 'birthYear'
+             AND ? = 'asc'
+        THEN birthYear
+    END ASC,
+
+    CASE
+        WHEN ? = 'birthYear'
+             AND ? = 'desc'
+        THEN birthYear
+    END DESC,
+
+    CASE
+        WHEN ? = 'height'
+             AND ? = 'asc'
+        THEN height
+    END ASC,
+
+    CASE
+        WHEN ? = 'height'
+             AND ? = 'desc'
+        THEN height
+    END DESC,
+
+    playerID ASC
+LIMIT ? OFFSET ?
+`
+
+type GetPeoplePaginatedSortedParams struct {
+	Sortby    interface{}
+	Sortorder interface{}
+	Limit     int32
+	Offset    int32
+}
+
+func (q *Queries) GetPeoplePaginatedSorted(ctx context.Context, arg GetPeoplePaginatedSortedParams) ([]Person, error) {
+	rows, err := q.db.QueryContext(ctx, getPeoplePaginatedSorted,
+		arg.Sortby,
+		arg.Sortorder,
+		arg.Sortby,
+		arg.Sortorder,
+		arg.Sortby,
+		arg.Sortorder,
+		arg.Sortby,
+		arg.Sortorder,
+		arg.Sortby,
+		arg.Sortorder,
+		arg.Sortby,
+		arg.Sortorder,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Person
+	for rows.Next() {
+		var i Person
+		if err := rows.Scan(
+			&i.Playerid,
+			&i.Birthyear,
+			&i.Birthmonth,
+			&i.Birthday,
+			&i.Birthcountry,
+			&i.Birthstate,
+			&i.Birthcity,
+			&i.Deathyear,
+			&i.Deathmonth,
+			&i.Deathday,
+			&i.Deathcountry,
+			&i.Deathstate,
+			&i.Deathcity,
+			&i.Namefirst,
+			&i.Namelast,
+			&i.Namegiven,
+			&i.Weight,
+			&i.Height,
+			&i.Bats,
+			&i.Throws,
+			&i.Debut,
+			&i.Finalgame,
+			&i.Retroid,
+			&i.Bbrefid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPeopleTokenAfter = `-- name: GetPeopleTokenAfter :many
+SELECT
+    playerID,
+    birthYear,
+    birthMonth,
+    birthDay,
+    birthCountry,
+    birthState,
+    birthCity,
+    deathYear,
+    deathMonth,
+    deathDay,
+    deathCountry,
+    deathState,
+    deathCity,
+    nameFirst,
+    nameLast,
+    nameGiven,
+    weight,
+    height,
+    bats,
+    throws,
+    debut,
+    finalGame,
+    retroID,
+    bbrefID
+FROM people
+WHERE playerID > ?
+ORDER BY playerID
+LIMIT ?
+`
+
+type GetPeopleTokenAfterParams struct {
+	Playerid string
+	Limit    int32
+}
+
+func (q *Queries) GetPeopleTokenAfter(ctx context.Context, arg GetPeopleTokenAfterParams) ([]Person, error) {
+	rows, err := q.db.QueryContext(ctx, getPeopleTokenAfter, arg.Playerid, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Person
+	for rows.Next() {
+		var i Person
+		if err := rows.Scan(
+			&i.Playerid,
+			&i.Birthyear,
+			&i.Birthmonth,
+			&i.Birthday,
+			&i.Birthcountry,
+			&i.Birthstate,
+			&i.Birthcity,
+			&i.Deathyear,
+			&i.Deathmonth,
+			&i.Deathday,
+			&i.Deathcountry,
+			&i.Deathstate,
+			&i.Deathcity,
+			&i.Namefirst,
+			&i.Namelast,
+			&i.Namegiven,
+			&i.Weight,
+			&i.Height,
+			&i.Bats,
+			&i.Throws,
+			&i.Debut,
+			&i.Finalgame,
+			&i.Retroid,
+			&i.Bbrefid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPeopleTokenFirst = `-- name: GetPeopleTokenFirst :many
+SELECT
+    playerID,
+    birthYear,
+    birthMonth,
+    birthDay,
+    birthCountry,
+    birthState,
+    birthCity,
+    deathYear,
+    deathMonth,
+    deathDay,
+    deathCountry,
+    deathState,
+    deathCity,
+    nameFirst,
+    nameLast,
+    nameGiven,
+    weight,
+    height,
+    bats,
+    throws,
+    debut,
+    finalGame,
+    retroID,
+    bbrefID
+FROM people
+ORDER BY playerID
+LIMIT ?
+`
+
+func (q *Queries) GetPeopleTokenFirst(ctx context.Context, limit int32) ([]Person, error) {
+	rows, err := q.db.QueryContext(ctx, getPeopleTokenFirst, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -221,4 +688,90 @@ func (q *Queries) SearchPeopleByName(ctx context.Context, concat interface{}) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const updatePerson = `-- name: UpdatePerson :exec
+UPDATE people
+SET
+    birthYear = COALESCE(?, birthYear),
+    birthMonth = COALESCE(?, birthMonth),
+    birthDay = COALESCE(?, birthDay),
+    birthCountry = COALESCE(?, birthCountry),
+    birthState = COALESCE(?, birthState),
+    birthCity = COALESCE(?, birthCity),
+    deathYear = COALESCE(?, deathYear),
+    deathMonth = COALESCE(?, deathMonth),
+    deathDay = COALESCE(?, deathDay),
+    deathCountry = COALESCE(?, deathCountry),
+    deathState = COALESCE(?, deathState),
+    deathCity = COALESCE(?, deathCity),
+    nameFirst = COALESCE(?, nameFirst),
+    nameLast = COALESCE(?, nameLast),
+    nameGiven = COALESCE(?, nameGiven),
+    weight = COALESCE(?, weight),
+    height = COALESCE(?, height),
+    bats = COALESCE(?, bats),
+    throws = COALESCE(?, throws),
+    debut = COALESCE(?, debut),
+    finalGame = COALESCE(?, finalGame),
+    retroID = COALESCE(?, retroID),
+    bbrefID = COALESCE(?, bbrefID)
+WHERE playerID = ?
+`
+
+type UpdatePersonParams struct {
+	Birthyear    sql.NullInt16
+	Birthmonth   sql.NullInt16
+	Birthday     sql.NullInt16
+	Birthcountry sql.NullString
+	Birthstate   sql.NullString
+	Birthcity    sql.NullString
+	Deathyear    sql.NullInt16
+	Deathmonth   sql.NullInt16
+	Deathday     sql.NullInt16
+	Deathcountry sql.NullString
+	Deathstate   sql.NullString
+	Deathcity    sql.NullString
+	Namefirst    sql.NullString
+	Namelast     sql.NullString
+	Namegiven    sql.NullString
+	Weight       sql.NullInt16
+	Height       sql.NullInt16
+	Bats         sql.NullString
+	Throws       sql.NullString
+	Debut        sql.NullTime
+	Finalgame    sql.NullTime
+	Retroid      sql.NullString
+	Bbrefid      sql.NullString
+	Playerid     string
+}
+
+func (q *Queries) UpdatePerson(ctx context.Context, arg UpdatePersonParams) error {
+	_, err := q.db.ExecContext(ctx, updatePerson,
+		arg.Birthyear,
+		arg.Birthmonth,
+		arg.Birthday,
+		arg.Birthcountry,
+		arg.Birthstate,
+		arg.Birthcity,
+		arg.Deathyear,
+		arg.Deathmonth,
+		arg.Deathday,
+		arg.Deathcountry,
+		arg.Deathstate,
+		arg.Deathcity,
+		arg.Namefirst,
+		arg.Namelast,
+		arg.Namegiven,
+		arg.Weight,
+		arg.Height,
+		arg.Bats,
+		arg.Throws,
+		arg.Debut,
+		arg.Finalgame,
+		arg.Retroid,
+		arg.Bbrefid,
+		arg.Playerid,
+	)
+	return err
 }

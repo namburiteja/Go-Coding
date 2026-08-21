@@ -63,6 +63,46 @@ func (s *PersonService) GetPeoplePaginated(
 	return result, nil
 }
 
+func (s *PersonService) GetPeopleCursor(
+	ctx context.Context,
+	cursor string,
+	limit int32,
+) ([]dto.PersonDTO, error) {
+
+	var people []generated.Person
+	var err error
+
+	if cursor == "" {
+		people, err = s.Queries.GetPeopleCursorFirst(
+			ctx,
+			limit,
+		)
+	} else {
+		people, err = s.Queries.GetPeopleCursorAfter(
+			ctx,
+			generated.GetPeopleCursorAfterParams{
+				Playerid: cursor,
+				Limit:    limit,
+			},
+		)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.PersonDTO, 0, len(people))
+
+	for _, person := range people {
+		result = append(
+			result,
+			dto.ToPersonDTO(person),
+		)
+	}
+
+	return result, nil
+}
+
 func (s *PersonService) GetPeopleByID(
 	ctx context.Context,
 	playerID string,
@@ -98,4 +138,95 @@ func (s *PersonService) SearchPeopleByName(
 	}
 
 	return result, nil
+}
+
+func (s *PersonService) GetPeopleToken(
+	ctx context.Context,
+	playerID string,
+	limit int32,
+) ([]dto.PersonDTO, error) {
+
+	var people []generated.Person
+	var err error
+
+	if playerID == "" {
+
+		people, err = s.Queries.GetPeopleTokenFirst(
+			ctx,
+			limit,
+		)
+
+	} else {
+
+		people, err = s.Queries.GetPeopleTokenAfter(
+			ctx,
+			generated.GetPeopleTokenAfterParams{
+				Playerid: playerID,
+				Limit:    limit,
+			},
+		)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(
+		[]dto.PersonDTO,
+		0,
+		len(people),
+	)
+
+	for _, person := range people {
+
+		result = append(
+			result,
+			dto.ToPersonDTO(person),
+		)
+	}
+
+	return result, nil
+}
+
+
+func (s *PersonService) UpdatePerson(
+    ctx context.Context,
+    person generated.UpdatePersonParams,
+) error {
+    return s.Queries.UpdatePerson(ctx, person)
+}
+
+
+func (s *PersonService) GetPeoplePaginatedSorted(
+    ctx context.Context,
+    limit int32,
+    offset int32,
+    sortBy string,
+    sortOrder string,
+) ([]dto.PersonDTO, error) {
+
+    people, err := s.Queries.GetPeoplePaginatedSorted(
+        ctx,
+        generated.GetPeoplePaginatedSortedParams{
+            Sortby:    sortBy,
+            Sortorder: sortOrder,
+            Limit:     limit,
+            Offset:    offset,
+        },
+    )
+
+    if err != nil {
+        return nil, err
+    }
+
+    result := make([]dto.PersonDTO, 0, len(people))
+
+    for _, person := range people {
+        result = append(
+            result,
+            dto.ToPersonDTO(person),
+        )
+    }
+
+    return result, nil
 }

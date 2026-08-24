@@ -1,75 +1,49 @@
-# React + TypeScript + Vite
+# PayLater Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite SPA for Customer, Merchant, and Admin portals.
 
-Currently, two official plugins are available:
+## Ports
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Surface | Host port | Notes |
+|---------|-----------|--------|
+| Jenkins | **8080** | Do not use for PayLater |
+| PayLater UI (Docker) | **8081** | nginx → container `:80` |
+| Vite dev | **5173** | `npm run dev` |
+| API Gateway | **9090** | All browser API calls |
 
-## React Compiler
+## Local development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+cp .env.example .env   # VITE_API_BASE_URL=http://localhost:9090
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Ensure the backend gateway is running on `:9090` (see `../paylater-backend/README.md`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Docker (with backend Compose)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+From `paylater-backend/`:
 
+```bash
+docker compose up --build -d
+```
+
+UI: **http://localhost:8081**  
+The image is built with `VITE_API_BASE_URL=/api`; nginx proxies `/api/` to the `gateway` service.
+
+## Environment
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_API_BASE_URL` | Axios base URL (baked at Vite build time) |
+
+Suitable for Kubernetes: inject at image build or serve a runtime config later; never hardcode container IPs.
+
+## Scripts
+
+```bash
+npm run lint
+npm run build
+npm run preview
 ```

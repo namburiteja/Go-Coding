@@ -197,36 +197,47 @@ func (s *PersonService) UpdatePerson(
 }
 
 
-func (s *PersonService) GetPeoplePaginatedSorted(
-    ctx context.Context,
-    limit int32,
-    offset int32,
-    sortBy string,
-    sortOrder string,
+
+func (s *PersonService) GetPeoplePaginatedSortedFiltered(
+	ctx context.Context,
+	params generated.GetPeoplePaginatedSortedFilteredParams,
 ) ([]dto.PersonDTO, error) {
 
-    people, err := s.Queries.GetPeoplePaginatedSorted(
-        ctx,
-        generated.GetPeoplePaginatedSortedParams{
-            Sortby:    sortBy,
-            Sortorder: sortOrder,
-            Limit:     limit,
-            Offset:    offset,
-        },
-    )
+	people, err := s.Queries.GetPeoplePaginatedSortedFiltered(
+		ctx,
+		params,
+	)
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    result := make([]dto.PersonDTO, 0, len(people))
+	result := make(
+		[]dto.PersonDTO,
+		0,
+		len(people),
+	)
 
-    for _, person := range people {
-        result = append(
-            result,
-            dto.ToPersonDTO(person),
-        )
-    }
+	for _, person := range people {
+		result = append(
+			result,
+			dto.ToPersonDTO(person),
+		)
+	}
 
-    return result, nil
+	return result, nil
 }
+
+func (s *PersonService) CountPeopleFiltered(
+	ctx context.Context,
+	params generated.CountPeopleFilteredParams,
+) (int64, error) {
+
+	return s.Queries.CountPeopleFiltered(
+		ctx,
+		params,
+	)
+}
+
+
+

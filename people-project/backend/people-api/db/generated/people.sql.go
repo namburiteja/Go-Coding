@@ -11,10 +11,14 @@ import (
 )
 
 const countPeople = `-- name: CountPeople :one
+
 SELECT COUNT(*)
 FROM people
 `
 
+// =========================================================
+// COUNT ALL PEOPLE
+// =========================================================
 func (q *Queries) CountPeople(ctx context.Context) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countPeople)
 	var count int64
@@ -22,7 +26,113 @@ func (q *Queries) CountPeople(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countPeopleFiltered = `-- name: CountPeopleFiltered :one
+
+SELECT COUNT(*)
+FROM people
+
+WHERE
+    (
+        ? IS NULL
+        OR birthCountry = ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR birthYear >= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR birthYear <= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR height >= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR height <= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR weight >= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR weight <= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR bats = ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR throws = ?
+    )
+`
+
+type CountPeopleFilteredParams struct {
+	Birthcountry  sql.NullString
+	Birthyearfrom sql.NullInt16
+	Birthyearto   sql.NullInt16
+	Heightfrom    sql.NullInt16
+	Heightto      sql.NullInt16
+	Weightfrom    sql.NullInt16
+	Weightto      sql.NullInt16
+	Bats          sql.NullString
+	Throws        sql.NullString
+}
+
+// =========================================================
+// COUNT FILTERED PEOPLE
+//
+// IMPORTANT:
+// This must use EXACTLY the same filters as the
+// GetPeoplePaginatedSortedFiltered query.
+// =========================================================
+func (q *Queries) CountPeopleFiltered(ctx context.Context, arg CountPeopleFilteredParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPeopleFiltered,
+		arg.Birthcountry,
+		arg.Birthcountry,
+		arg.Birthyearfrom,
+		arg.Birthyearfrom,
+		arg.Birthyearto,
+		arg.Birthyearto,
+		arg.Heightfrom,
+		arg.Heightfrom,
+		arg.Heightto,
+		arg.Heightto,
+		arg.Weightfrom,
+		arg.Weightfrom,
+		arg.Weightto,
+		arg.Weightto,
+		arg.Bats,
+		arg.Bats,
+		arg.Throws,
+		arg.Throws,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getPeopleCursorAfter = `-- name: GetPeopleCursorAfter :many
+
 SELECT
     playerID,
     birthYear,
@@ -59,6 +169,9 @@ type GetPeopleCursorAfterParams struct {
 	Limit    int32
 }
 
+// =========================================================
+// CURSOR PAGINATION - AFTER CURSOR
+// =========================================================
 func (q *Queries) GetPeopleCursorAfter(ctx context.Context, arg GetPeopleCursorAfterParams) ([]Person, error) {
 	rows, err := q.db.QueryContext(ctx, getPeopleCursorAfter, arg.Playerid, arg.Limit)
 	if err != nil {
@@ -108,6 +221,7 @@ func (q *Queries) GetPeopleCursorAfter(ctx context.Context, arg GetPeopleCursorA
 }
 
 const getPeopleCursorFirst = `-- name: GetPeopleCursorFirst :many
+
 SELECT
     playerID,
     birthYear,
@@ -138,6 +252,9 @@ ORDER BY playerID
 LIMIT ?
 `
 
+// =========================================================
+// CURSOR PAGINATION - FIRST PAGE
+// =========================================================
 func (q *Queries) GetPeopleCursorFirst(ctx context.Context, limit int32) ([]Person, error) {
 	rows, err := q.db.QueryContext(ctx, getPeopleCursorFirst, limit)
 	if err != nil {
@@ -187,6 +304,7 @@ func (q *Queries) GetPeopleCursorFirst(ctx context.Context, limit int32) ([]Pers
 }
 
 const getPeoplePaginated = `-- name: GetPeoplePaginated :many
+
 SELECT
     playerID,
     birthYear,
@@ -222,6 +340,9 @@ type GetPeoplePaginatedParams struct {
 	Offset int32
 }
 
+// =========================================================
+// BASIC OFFSET PAGINATION
+// =========================================================
 func (q *Queries) GetPeoplePaginated(ctx context.Context, arg GetPeoplePaginatedParams) ([]Person, error) {
 	rows, err := q.db.QueryContext(ctx, getPeoplePaginated, arg.Limit, arg.Offset)
 	if err != nil {
@@ -270,7 +391,8 @@ func (q *Queries) GetPeoplePaginated(ctx context.Context, arg GetPeoplePaginated
 	return items, nil
 }
 
-const getPeoplePaginatedSorted = `-- name: GetPeoplePaginatedSorted :many
+const getPeoplePaginatedSortedFiltered = `-- name: GetPeoplePaginatedSortedFiltered :many
+
 SELECT
     playerID,
     birthYear,
@@ -297,7 +419,63 @@ SELECT
     retroID,
     bbrefID
 FROM people
+
+WHERE
+    (
+        ? IS NULL
+        OR birthCountry = ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR birthYear >= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR birthYear <= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR height >= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR height <= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR weight >= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR weight <= ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR bats = ?
+    )
+
+    AND
+    (
+        ? IS NULL
+        OR throws = ?
+    )
+
 ORDER BY
+
     CASE
         WHEN ? = 'nameFirst'
              AND ? = 'asc'
@@ -332,21 +510,83 @@ ORDER BY
         WHEN ? = 'height'
              AND ? = 'desc'
         THEN height
+    END DESC,
+
+    CASE
+        WHEN ? = 'weight'
+             AND ? = 'asc'
+        THEN weight
+    END ASC,
+
+    CASE
+        WHEN ? = 'weight'
+             AND ? = 'desc'
+        THEN weight
     END DESC,
 
     playerID ASC
+
 LIMIT ? OFFSET ?
 `
 
-type GetPeoplePaginatedSortedParams struct {
-	Sortby    interface{}
-	Sortorder interface{}
-	Limit     int32
-	Offset    int32
+type GetPeoplePaginatedSortedFilteredParams struct {
+	Birthcountry  sql.NullString
+	Birthyearfrom sql.NullInt16
+	Birthyearto   sql.NullInt16
+	Heightfrom    sql.NullInt16
+	Heightto      sql.NullInt16
+	Weightfrom    sql.NullInt16
+	Weightto      sql.NullInt16
+	Bats          sql.NullString
+	Throws        sql.NullString
+	Sortby        interface{}
+	Sortorder     interface{}
+	Limit         int32
+	Offset        int32
 }
 
-func (q *Queries) GetPeoplePaginatedSorted(ctx context.Context, arg GetPeoplePaginatedSortedParams) ([]Person, error) {
-	rows, err := q.db.QueryContext(ctx, getPeoplePaginatedSorted,
+// =========================================================
+// FILTERED + SORTED + OFFSET PAGINATION
+//
+// Filters:
+// 1. Birth Country
+// 2. Birth Year From
+// 3. Birth Year To
+// 4. Height From
+// 5. Height To
+// 6. Weight From
+// 7. Weight To
+// 8. Bats
+// 9. Throws
+//
+// These represent 6 filter categories:
+// Country, Birth Year Range, Height Range,
+// Weight Range, Bats, Throws
+// =========================================================
+func (q *Queries) GetPeoplePaginatedSortedFiltered(ctx context.Context, arg GetPeoplePaginatedSortedFilteredParams) ([]Person, error) {
+	rows, err := q.db.QueryContext(ctx, getPeoplePaginatedSortedFiltered,
+		arg.Birthcountry,
+		arg.Birthcountry,
+		arg.Birthyearfrom,
+		arg.Birthyearfrom,
+		arg.Birthyearto,
+		arg.Birthyearto,
+		arg.Heightfrom,
+		arg.Heightfrom,
+		arg.Heightto,
+		arg.Heightto,
+		arg.Weightfrom,
+		arg.Weightfrom,
+		arg.Weightto,
+		arg.Weightto,
+		arg.Bats,
+		arg.Bats,
+		arg.Throws,
+		arg.Throws,
+		arg.Sortby,
+		arg.Sortorder,
+		arg.Sortby,
+		arg.Sortorder,
 		arg.Sortby,
 		arg.Sortorder,
 		arg.Sortby,
@@ -409,6 +649,7 @@ func (q *Queries) GetPeoplePaginatedSorted(ctx context.Context, arg GetPeoplePag
 }
 
 const getPeopleTokenAfter = `-- name: GetPeopleTokenAfter :many
+
 SELECT
     playerID,
     birthYear,
@@ -445,6 +686,9 @@ type GetPeopleTokenAfterParams struct {
 	Limit    int32
 }
 
+// =========================================================
+// TOKEN PAGINATION - AFTER TOKEN
+// =========================================================
 func (q *Queries) GetPeopleTokenAfter(ctx context.Context, arg GetPeopleTokenAfterParams) ([]Person, error) {
 	rows, err := q.db.QueryContext(ctx, getPeopleTokenAfter, arg.Playerid, arg.Limit)
 	if err != nil {
@@ -494,6 +738,7 @@ func (q *Queries) GetPeopleTokenAfter(ctx context.Context, arg GetPeopleTokenAft
 }
 
 const getPeopleTokenFirst = `-- name: GetPeopleTokenFirst :many
+
 SELECT
     playerID,
     birthYear,
@@ -524,6 +769,9 @@ ORDER BY playerID
 LIMIT ?
 `
 
+// =========================================================
+// TOKEN PAGINATION - FIRST PAGE
+// =========================================================
 func (q *Queries) GetPeopleTokenFirst(ctx context.Context, limit int32) ([]Person, error) {
 	rows, err := q.db.QueryContext(ctx, getPeopleTokenFirst, limit)
 	if err != nil {
@@ -573,6 +821,7 @@ func (q *Queries) GetPeopleTokenFirst(ctx context.Context, limit int32) ([]Perso
 }
 
 const getPersonByID = `-- name: GetPersonByID :one
+
 SELECT
     playerID,
     birthYear,
@@ -602,6 +851,9 @@ FROM people
 WHERE playerID = ?
 `
 
+// =========================================================
+// GET PERSON BY ID
+// =========================================================
 func (q *Queries) GetPersonByID(ctx context.Context, playerid string) (Person, error) {
 	row := q.db.QueryRowContext(ctx, getPersonByID, playerid)
 	var i Person
@@ -635,13 +887,42 @@ func (q *Queries) GetPersonByID(ctx context.Context, playerid string) (Person, e
 }
 
 const searchPeopleByName = `-- name: SearchPeopleByName :many
-SELECT playerid, birthyear, birthmonth, birthday, birthcountry, birthstate, birthcity, deathyear, deathmonth, deathday, deathcountry, deathstate, deathcity, namefirst, namelast, namegiven, weight, height, bats, throws, debut, finalgame, retroid, bbrefid
+
+SELECT
+    playerID,
+    birthYear,
+    birthMonth,
+    birthDay,
+    birthCountry,
+    birthState,
+    birthCity,
+    deathYear,
+    deathMonth,
+    deathDay,
+    deathCountry,
+    deathState,
+    deathCity,
+    nameFirst,
+    nameLast,
+    nameGiven,
+    weight,
+    height,
+    bats,
+    throws,
+    debut,
+    finalGame,
+    retroID,
+    bbrefID
 FROM people
-WHERE CONCAT(nameFirst, ' ', nameLast) LIKE CONCAT('%', ?, '%')
+WHERE CONCAT(nameFirst, ' ', nameLast)
+      LIKE CONCAT('%', ?, '%')
 ORDER BY nameFirst, nameLast
 LIMIT 20
 `
 
+// =========================================================
+// SEARCH BY NAME
+// =========================================================
 func (q *Queries) SearchPeopleByName(ctx context.Context, concat interface{}) ([]Person, error) {
 	rows, err := q.db.QueryContext(ctx, searchPeopleByName, concat)
 	if err != nil {
@@ -691,6 +972,7 @@ func (q *Queries) SearchPeopleByName(ctx context.Context, concat interface{}) ([
 }
 
 const updatePerson = `-- name: UpdatePerson :exec
+
 UPDATE people
 SET
     birthYear = COALESCE(?, birthYear),
@@ -699,23 +981,30 @@ SET
     birthCountry = COALESCE(?, birthCountry),
     birthState = COALESCE(?, birthState),
     birthCity = COALESCE(?, birthCity),
+
     deathYear = COALESCE(?, deathYear),
     deathMonth = COALESCE(?, deathMonth),
     deathDay = COALESCE(?, deathDay),
     deathCountry = COALESCE(?, deathCountry),
     deathState = COALESCE(?, deathState),
     deathCity = COALESCE(?, deathCity),
+
     nameFirst = COALESCE(?, nameFirst),
     nameLast = COALESCE(?, nameLast),
     nameGiven = COALESCE(?, nameGiven),
+
     weight = COALESCE(?, weight),
     height = COALESCE(?, height),
+
     bats = COALESCE(?, bats),
     throws = COALESCE(?, throws),
+
     debut = COALESCE(?, debut),
     finalGame = COALESCE(?, finalGame),
+
     retroID = COALESCE(?, retroID),
     bbrefID = COALESCE(?, bbrefID)
+
 WHERE playerID = ?
 `
 
@@ -746,6 +1035,9 @@ type UpdatePersonParams struct {
 	Playerid     string
 }
 
+// =========================================================
+// UPDATE PERSON
+// =========================================================
 func (q *Queries) UpdatePerson(ctx context.Context, arg UpdatePersonParams) error {
 	_, err := q.db.ExecContext(ctx, updatePerson,
 		arg.Birthyear,

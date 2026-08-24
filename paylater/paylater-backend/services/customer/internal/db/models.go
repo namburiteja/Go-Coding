@@ -57,7 +57,7 @@ type Customer struct {
 	ID             int32               `json:"id"`
 	Name           string              `json:"name"`
 	Email          string              `json:"email"`
-	Password       string              `json:"password"`
+	Password       string              `json:"-"`
 	CreditLimit    string              `json:"credit_limit"`
 	TotalDue       sql.NullString      `json:"total_due"`
 	PaymentDueDate time.Time           `json:"payment_due_date"`

@@ -26,7 +26,7 @@ VALUES (
 type CreateAdminParams struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
-	Password string `json:"password"`
+	Password string `json:"-"`
 }
 
 func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (sql.Result, error) {

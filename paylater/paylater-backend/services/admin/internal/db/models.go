@@ -12,6 +12,6 @@ type Admin struct {
 	ID        int32        `json:"id"`
 	Name      string       `json:"name"`
 	Email     string       `json:"email"`
-	Password  string       `json:"password"`
+	Password  string       `json:"-"`
 	CreatedAt sql.NullTime `json:"created_at"`
 }

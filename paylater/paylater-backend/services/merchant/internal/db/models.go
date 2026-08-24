@@ -12,7 +12,7 @@ type Merchant struct {
 	ID                   int32          `json:"id"`
 	Name                 string         `json:"name"`
 	Email                string         `json:"email"`
-	Password             string         `json:"password"`
+	Password             string         `json:"-"`
 	Phone                string         `json:"phone"`
 	CommissionPercentage sql.NullString `json:"commission_percentage"`
 	CreatedAt            sql.NullTime   `json:"created_at"`

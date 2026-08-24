@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-ssr
+.git
+*.md
+.env
+.env.*
+!.env.example
+_phase1_log.txt

@@ -23,7 +23,10 @@ services:
       - paylater-network
 
   customer:
-    image: tejanamburi13/paylater-customer:v1.0.0
+    build:
+      context: .
+      dockerfile: services/customer/Dockerfile
+    image: paylater-customer:local
     container_name: customer-service
 
     env_file:
@@ -40,7 +43,10 @@ services:
       - paylater-network
 
   merchant:
-    image: tejanamburi13/paylater-merchant:v1.0.0
+    build:
+      context: .
+      dockerfile: services/merchant/Dockerfile
+    image: paylater-merchant:local
     container_name: merchant-service
 
     env_file:
@@ -57,7 +63,10 @@ services:
       - paylater-network
 
   admin:
-    image: tejanamburi13/paylater-admin:v1.0.0
+    build:
+      context: .
+      dockerfile: services/admin/Dockerfile
+    image: paylater-admin:local
     container_name: admin-service
 
     env_file:
@@ -74,7 +83,10 @@ services:
       - paylater-network
 
   ledger:
-    image: tejanamburi13/paylater-ledger:v1.0.0
+    build:
+      context: .
+      dockerfile: services/ledger/Dockerfile
+    image: paylater-ledger:local
     container_name: ledger-service
 
     env_file:
@@ -91,7 +103,10 @@ services:
       - paylater-network
 
   report:
-    image: tejanamburi13/paylater-report:v1.0.0
+    build:
+      context: .
+      dockerfile: services/report/Dockerfile
+    image: paylater-report:local
     container_name: report-service
 
     env_file:
@@ -108,7 +123,10 @@ services:
       - paylater-network
 
   gateway:
-    image: tejanamburi13/paylater-gateway:v1.0.0
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    image: paylater-gateway:local
     container_name: gateway
 
     env_file:
@@ -126,8 +144,29 @@ services:
       report:
         condition: service_started
 
+    # Host 9090 — do not use 8080 (Jenkins).
     ports:
       - "9090:9090"
+
+    networks:
+      - paylater-network
+
+  # SPA on host 8081 → nginx :80 (Jenkins keeps host 8080).
+  frontend:
+    build:
+      context: ../paylater-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    image: paylater-frontend:local
+    container_name: paylater-frontend
+
+    depends_on:
+      gateway:
+        condition: service_started
+
+    ports:
+      - "8081:80"
 
     networks:
       - paylater-network

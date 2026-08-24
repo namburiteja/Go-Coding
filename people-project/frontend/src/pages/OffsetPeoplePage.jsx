@@ -10,6 +10,7 @@ import {
 import PeopleTable from "../components/PeopleTable";
 import Pagination from "../components/Pagination";
 import SortControls from "../components/SortControls";
+import PeopleFilters from "../components/PeopleFilters";
 
 function OffsetPeoplePage({ onPersonClick }) {
   const [people, setPeople] = useState([]);
@@ -29,6 +30,20 @@ function OffsetPeoplePage({ onPersonClick }) {
   const [sortBy, setSortBy] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
 
+  const [filters, setFilters] = useState({});
+
+  const handleApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+    setPage(1);
+    setError("");
+  };
+
+  const handleClearFilters = () => {
+    setFilters({});
+    setPage(1);
+    setError("");
+  };
+
   /*
    * ==========================================
    * LOAD OFFSET PAGINATED PEOPLE
@@ -41,14 +56,14 @@ function OffsetPeoplePage({ onPersonClick }) {
     }
 
     loadPeople();
-  }, [page, searchText, sortBy, sortOrder]);
+  }, [page, searchText, sortBy, sortOrder, filters]);
 
   const loadPeople = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const data = await getPeople(page,limit,sortBy,sortOrder);
+    const data = await getPeople(page,limit,sortBy,sortOrder,filters);
 
       setPeople(data.data);
       setTotalPages(data.totalPages);
@@ -212,6 +227,10 @@ function OffsetPeoplePage({ onPersonClick }) {
             />
         </div>
 
+        <PeopleFilters
+          onApply={handleApplyFilters}
+          onClear={handleClearFilters}
+        />
         {error && (
           <div className="error">
             {error}

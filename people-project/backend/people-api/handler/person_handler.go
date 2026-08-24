@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"fmt"
 	"net/http"
 	"people-api/db/generated"
 	"people-api/dto"
@@ -580,148 +581,436 @@ func nullTime(value *string) sql.NullTime {
 }
 
 func (h *PersonHandler) GetAllPeople(
-    w http.ResponseWriter,
-    r *http.Request,
+	w http.ResponseWriter,
+	r *http.Request,
 ) {
+	page := 1
+	limit := 20
 
-    page := 1
-    limit := 20
+	pageParam := r.URL.Query().Get("page")
+	limitParam := r.URL.Query().Get("limit")
 
-    pageParam := r.URL.Query().Get("page")
-    limitParam := r.URL.Query().Get("limit")
+	sortBy := r.URL.Query().Get("sortBy")
+	sortOrder := r.URL.Query().Get("sortOrder")
 
-    sortBy := r.URL.Query().Get("sortBy")
-    sortOrder := r.URL.Query().Get("sortOrder")
+	var err error
 
-    var err error
+	// -----------------------------------------
+	// PAGE
+	// -----------------------------------------
 
-    if pageParam != "" {
-        page, err = strconv.Atoi(pageParam)
+	if pageParam != "" {
+		page, err = strconv.Atoi(pageParam)
 
-        if err != nil || page < 1 {
-            http.Error(
-                w,
-                "Invalid page",
-                http.StatusBadRequest,
-            )
-            return
-        }
-    }
+		if err != nil || page < 1 {
+			http.Error(
+				w,
+				"Invalid page",
+				http.StatusBadRequest,
+			)
+			return
+		}
+	}
 
-    if limitParam != "" {
-        limit, err = strconv.Atoi(limitParam)
+	// -----------------------------------------
+	// LIMIT
+	// -----------------------------------------
 
-        if err != nil || limit < 1 || limit > 100 {
-            http.Error(
-                w,
-                "Limit must be between 1 and 100",
-                http.StatusBadRequest,
-            )
-            return
-        }
-    }
+	if limitParam != "" {
+		limit, err = strconv.Atoi(limitParam)
 
-    // Default sorting
-    if sortBy == "" {
-        sortBy = "playerID"
-    }
+		if err != nil || limit < 1 || limit > 100 {
+			http.Error(
+				w,
+				"Limit must be between 1 and 100",
+				http.StatusBadRequest,
+			)
+			return
+		}
+	}
 
-    if sortOrder == "" {
-        sortOrder = "asc"
-    }
+	// -----------------------------------------
+	// DEFAULT SORTING
+	// -----------------------------------------
 
-    // Validate sort field
-    validSortFields := map[string]bool{
-        "nameFirst":  true,
-        "birthYear":  true,
-        "height":     true,
-        "playerID":   true,
-    }
+	if sortBy == "" {
+		sortBy = "playerID"
+	}
 
-    if !validSortFields[sortBy] {
-        http.Error(
-            w,
-            "Invalid sort field",
-            http.StatusBadRequest,
-        )
-        return
-    }
+	if sortOrder == "" {
+		sortOrder = "asc"
+	}
 
-    // Validate sort order
-    if sortOrder != "asc" && sortOrder != "desc" {
-        http.Error(
-            w,
-            "Sort order must be asc or desc",
-            http.StatusBadRequest,
-        )
-        return
-    }
+	// -----------------------------------------
+	// VALID SORT FIELDS
+	// -----------------------------------------
 
-    offset := (page - 1) * limit
+	validSortFields := map[string]bool{
+		"nameFirst": true,
+		"birthYear": true,
+		"height":    true,
+		"playerID":  true,
+	}
 
-    people, err := h.Service.GetPeoplePaginatedSorted(
-        r.Context(),
-        int32(limit),
-        int32(offset),
-        sortBy,
-        sortOrder,
-    )
+	if !validSortFields[sortBy] {
+		http.Error(
+			w,
+			"Invalid sort field",
+			http.StatusBadRequest,
+		)
+		return
+	}
 
-    if err != nil {
-        log.Println(
-            "GetPeoplePaginatedSorted error:",
-            err,
-        )
+	// -----------------------------------------
+	// VALID SORT ORDER
+	// -----------------------------------------
 
-        http.Error(
-            w,
-            "Failed to fetch people",
-            http.StatusInternalServerError,
-        )
-        return
-    }
+	if sortOrder != "asc" && sortOrder != "desc" {
+		http.Error(
+			w,
+			"Sort order must be asc or desc",
+			http.StatusBadRequest,
+		)
+		return
+	}
 
-    total, err := h.Service.CountPeople(r.Context())
+	// -----------------------------------------
+	// OFFSET
+	// -----------------------------------------
 
-    if err != nil {
-        log.Println(
-            "CountPeople error:",
-            err,
-        )
+	offset := (page - 1) * limit
 
-        http.Error(
-            w,
-            "Failed to count people",
-            http.StatusInternalServerError,
-        )
-        return
-    }
+	// =========================================
+	// FILTERS
+	// =========================================
 
-    totalPages := int(
-        (total + int64(limit) - 1) / int64(limit),
-    )
+	birthCountry := r.URL.Query().Get("birthCountry")
 
-    if page > totalPages && totalPages > 0 {
-        http.Error(
-            w,
-            "Page not found",
-            http.StatusNotFound,
-        )
-        return
-    }
+	birthYearFrom := r.URL.Query().Get("birthYearFrom")
+	birthYearTo := r.URL.Query().Get("birthYearTo")
 
-    response := PaginatedResponse{
-        Data:       people,
-        Page:       page,
-        Limit:      limit,
-        Total:      total,
-        TotalPages: totalPages,
-    }
+	heightFrom := r.URL.Query().Get("heightFrom")
+	heightTo := r.URL.Query().Get("heightTo")
 
-    w.Header().Set(
-        "Content-Type",
-        "application/json",
-    )
+	weightFrom := r.URL.Query().Get("weightFrom")
+	weightTo := r.URL.Query().Get("weightTo")
 
-    json.NewEncoder(w).Encode(response)
+	bats := r.URL.Query().Get("bats")
+	throws := r.URL.Query().Get("throws")
+
+	// -----------------------------------------
+	// PARSE OPTIONAL INTEGER FILTERS
+	// -----------------------------------------
+
+	var birthYearFromValue *int16
+	var birthYearToValue *int16
+	var heightFromValue *int16
+	var heightToValue *int16
+	var weightFromValue *int16
+	var weightToValue *int16
+
+	parseInt16 := func(
+		value string,
+		fieldName string,
+	) (*int16, error) {
+
+		if value == "" {
+			return nil, nil
+		}
+
+		parsed, err := strconv.ParseInt(value, 10, 16)
+
+		if err != nil {
+			return nil, fmt.Errorf(
+				"invalid %s",
+				fieldName,
+			)
+		}
+
+		result := int16(parsed)
+
+		return &result, nil
+	}
+
+	birthYearFromValue, err = parseInt16(
+		birthYearFrom,
+		"birthYearFrom",
+	)
+
+	if err != nil {
+		http.Error(
+			w,
+			err.Error(),
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	birthYearToValue, err = parseInt16(
+		birthYearTo,
+		"birthYearTo",
+	)
+
+	if err != nil {
+		http.Error(
+			w,
+			err.Error(),
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	heightFromValue, err = parseInt16(
+		heightFrom,
+		"heightFrom",
+	)
+
+	if err != nil {
+		http.Error(
+			w,
+			err.Error(),
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	heightToValue, err = parseInt16(
+		heightTo,
+		"heightTo",
+	)
+
+	if err != nil {
+		http.Error(
+			w,
+			err.Error(),
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	weightFromValue, err = parseInt16(
+		weightFrom,
+		"weightFrom",
+	)
+
+	if err != nil {
+		http.Error(
+			w,
+			err.Error(),
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	weightToValue, err = parseInt16(
+		weightTo,
+		"weightTo",
+	)
+
+	if err != nil {
+		http.Error(
+			w,
+			err.Error(),
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	// =========================================
+	// BUILD SQLC PARAMETERS
+	// =========================================
+
+	params := generated.GetPeoplePaginatedSortedFilteredParams{
+
+		Birthcountry: sql.NullString{
+			String: birthCountry,
+			Valid:  birthCountry != "",
+		},
+
+		Birthyearfrom: sql.NullInt16{
+			Int16: valueOrZero(birthYearFromValue),
+			Valid: birthYearFromValue != nil,
+		},
+
+		Birthyearto: sql.NullInt16{
+			Int16: valueOrZero(birthYearToValue),
+			Valid: birthYearToValue != nil,
+		},
+
+		Heightfrom: sql.NullInt16{
+			Int16: valueOrZero(heightFromValue),
+			Valid: heightFromValue != nil,
+		},
+
+		Heightto: sql.NullInt16{
+			Int16: valueOrZero(heightToValue),
+			Valid: heightToValue != nil,
+		},
+
+		Weightfrom: sql.NullInt16{
+			Int16: valueOrZero(weightFromValue),
+			Valid: weightFromValue != nil,
+		},
+
+		Weightto: sql.NullInt16{
+			Int16: valueOrZero(weightToValue),
+			Valid: weightToValue != nil,
+		},
+
+		Bats: sql.NullString{
+			String: bats,
+			Valid:  bats != "",
+		},
+
+		Throws: sql.NullString{
+			String: throws,
+			Valid:  throws != "",
+		},
+
+		Sortby: sql.NullString{
+			String: sortBy,
+			Valid:  true,
+		},
+
+		Sortorder: sql.NullString{
+			String: sortOrder,
+			Valid:  true,
+		},
+
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	}
+
+	// =========================================
+	// GET FILTERED + SORTED + PAGINATED DATA
+	// =========================================
+
+	people, err := h.Service.GetPeoplePaginatedSortedFiltered(
+		r.Context(),
+		params,
+	)
+
+	if err != nil {
+		log.Println(
+			"GetPeoplePaginatedSortedFiltered error:",
+			err,
+		)
+
+		http.Error(
+			w,
+			"Failed to fetch people",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	// =========================================
+	// COUNT FILTERED RECORDS
+	// =========================================
+
+	countParams := generated.CountPeopleFilteredParams{
+
+		Birthcountry: sql.NullString{
+			String: birthCountry,
+			Valid:  birthCountry != "",
+		},
+
+		Birthyearfrom: sql.NullInt16{
+			Int16: valueOrZero(birthYearFromValue),
+			Valid: birthYearFromValue != nil,
+		},
+
+		Birthyearto: sql.NullInt16{
+			Int16: valueOrZero(birthYearToValue),
+			Valid: birthYearToValue != nil,
+		},
+
+		Heightfrom: sql.NullInt16{
+			Int16: valueOrZero(heightFromValue),
+			Valid: heightFromValue != nil,
+		},
+
+		Heightto: sql.NullInt16{
+			Int16: valueOrZero(heightToValue),
+			Valid: heightToValue != nil,
+		},
+
+		Weightfrom: sql.NullInt16{
+			Int16: valueOrZero(weightFromValue),
+			Valid: weightFromValue != nil,
+		},
+
+		Weightto: sql.NullInt16{
+			Int16: valueOrZero(weightToValue),
+			Valid: weightToValue != nil,
+		},
+
+		Bats: sql.NullString{
+			String: bats,
+			Valid:  bats != "",
+		},
+
+		Throws: sql.NullString{
+			String: throws,
+			Valid:  throws != "",
+		},
+	}
+
+	total, err := h.Service.CountPeopleFiltered(
+		r.Context(),
+		countParams,
+	)
+
+	if err != nil {
+		log.Println(
+			"CountPeopleFiltered error:",
+			err,
+		)
+
+		http.Error(
+			w,
+			"Failed to count people",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	// =========================================
+	// TOTAL PAGES
+	// =========================================
+
+	totalPages := int(
+		(total + int64(limit) - 1) / int64(limit),
+	)
+
+	if page > totalPages && totalPages > 0 {
+		http.Error(
+			w,
+			"Page not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
+	// =========================================
+	// RESPONSE
+	// =========================================
+
+	response := PaginatedResponse{
+		Data:       people,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
+	}
+
+	w.Header().Set(
+		"Content-Type",
+		"application/json",
+	)
+
+	json.NewEncoder(w).Encode(response)
 }

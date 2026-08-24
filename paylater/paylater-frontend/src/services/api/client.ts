@@ -3,6 +3,7 @@ import { ApiError } from '../../types/api'
 import type { ApiErrorBody } from '../../types/auth'
 import { clearStoredToken, getStoredToken } from '../../utils/jwt'
 
+// Local: http://localhost:9090 — Docker SPA: /api (nginx → gateway)
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9090'
 
 export const apiClient = axios.create({

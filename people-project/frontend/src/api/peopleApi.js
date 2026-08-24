@@ -8,14 +8,52 @@ export const getPeople = async (
   page = 1,
   limit = 10,
   sortBy = "",
-  sortOrder = ""
+  sortOrder = "",
+  filters = {}
 ) => {
   const response = await API.get("/people", {
     params: {
       page,
       limit,
+
       ...(sortBy && { sortBy }),
       ...(sortOrder && { sortOrder }),
+
+      ...(filters.birthCountry && {
+        birthCountry: filters.birthCountry,
+      }),
+
+      ...(filters.birthYearFrom && {
+        birthYearFrom: filters.birthYearFrom,
+      }),
+
+      ...(filters.birthYearTo && {
+        birthYearTo: filters.birthYearTo,
+      }),
+
+      ...(filters.heightFrom && {
+        heightFrom: filters.heightFrom,
+      }),
+
+      ...(filters.heightTo && {
+        heightTo: filters.heightTo,
+      }),
+
+      ...(filters.weightFrom && {
+        weightFrom: filters.weightFrom,
+      }),
+
+      ...(filters.weightTo && {
+        weightTo: filters.weightTo,
+      }),
+
+      ...(filters.bats && {
+        bats: filters.bats,
+      }),
+
+      ...(filters.throws && {
+        throws: filters.throws,
+      }),
     },
   });
 

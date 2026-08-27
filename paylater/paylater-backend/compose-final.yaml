@@ -1,0 +1,228 @@
+name: paylater-backend
+services:
+  admin:
+    build:
+      context: /home/teja/Developer/go/learning/paylater/paylater-backend
+      dockerfile: services/admin/Dockerfile
+    container_name: admin-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+        required: true
+    environment:
+      DB_HOST: mysql
+      DB_NAME: admin_db
+      DB_PASSWORD: go123
+      DB_PORT: "3306"
+      DB_USER: go_user
+      JWT_EXPIRY: 24h
+      JWT_SECRET: paylater-super-secret-key
+      PORT: "9091"
+    image: paylater-admin:local
+    networks:
+      paylater-network: null
+    ports:
+      - mode: ingress
+        target: 9091
+        published: "9091"
+        protocol: tcp
+  customer:
+    build:
+      context: /home/teja/Developer/go/learning/paylater/paylater-backend
+      dockerfile: services/customer/Dockerfile
+    container_name: customer-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+        required: true
+    environment:
+      DB_HOST: mysql
+      DB_NAME: customer_db
+      DB_PASSWORD: go123
+      DB_PORT: "3306"
+      DB_USER: go_user
+      INTERNAL_SERVICE_TOKEN: paylater-internal-dev-token
+      JWT_EXPIRY: 24h
+      JWT_SECRET: paylater-super-secret-key
+      PORT: "9093"
+    image: paylater-customer:local
+    networks:
+      paylater-network: null
+    ports:
+      - mode: ingress
+        target: 9093
+        published: "9093"
+        protocol: tcp
+  frontend:
+    build:
+      context: /home/teja/Developer/go/learning/paylater/paylater-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: paylater-frontend
+    depends_on:
+      gateway:
+        condition: service_started
+        required: true
+    image: paylater-frontend:local
+    networks:
+      paylater-network: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "8081"
+        protocol: tcp
+  gateway:
+    build:
+      context: /home/teja/Developer/go/learning/paylater/paylater-backend
+      dockerfile: gateway/Dockerfile
+    container_name: gateway
+    depends_on:
+      admin:
+        condition: service_started
+        required: true
+      customer:
+        condition: service_started
+        required: true
+      ledger:
+        condition: service_started
+        required: true
+      merchant:
+        condition: service_started
+        required: true
+      report:
+        condition: service_started
+        required: true
+    environment:
+      ADMIN_SERVICE_URL: http://admin:9091
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:8081
+      CUSTOMER_SERVICE_URL: http://customer:9093
+      LEDGER_SERVICE_URL: http://ledger:9094
+      MERCHANT_SERVICE_URL: http://merchant:9092
+      PORT: "9090"
+      REPORT_SERVICE_URL: http://report:9095
+    image: paylater-gateway:local
+    networks:
+      paylater-network: null
+    ports:
+      - mode: ingress
+        target: 9090
+        published: "9090"
+        protocol: tcp
+  ledger:
+    build:
+      context: /home/teja/Developer/go/learning/paylater/paylater-backend
+      dockerfile: services/ledger/Dockerfile
+    container_name: ledger-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+        required: true
+    environment:
+      CUSTOMER_SERVICE_URL: http://customer:9093
+      DB_HOST: mysql
+      DB_NAME: ledger_db
+      DB_PASSWORD: go123
+      DB_PORT: "3306"
+      DB_USER: go_user
+      INTERNAL_SERVICE_TOKEN: paylater-internal-dev-token
+      JWT_SECRET: paylater-super-secret-key
+      MERCHANT_SERVICE_URL: http://merchant:9092
+      PORT: "9094"
+    image: paylater-ledger:local
+    networks:
+      paylater-network: null
+    ports:
+      - mode: ingress
+        target: 9094
+        published: "9094"
+        protocol: tcp
+  merchant:
+    build:
+      context: /home/teja/Developer/go/learning/paylater/paylater-backend
+      dockerfile: services/merchant/Dockerfile
+    container_name: merchant-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+        required: true
+    environment:
+      DB_HOST: mysql
+      DB_NAME: merchant_db
+      DB_PASSWORD: go123
+      DB_PORT: "3306"
+      DB_USER: go_user
+      INTERNAL_SERVICE_TOKEN: paylater-internal-dev-token
+      JWT_EXPIRY: 24h
+      JWT_SECRET: paylater-super-secret-key
+      PORT: "9092"
+    image: paylater-merchant:local
+    networks:
+      paylater-network: null
+    ports:
+      - mode: ingress
+        target: 9092
+        published: "9092"
+        protocol: tcp
+  mysql:
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        - -proot123
+      timeout: 5s
+      interval: 5s
+      retries: 10
+    image: mysql:8.4
+    networks:
+      paylater-network: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3307"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: mysql-data
+        target: /var/lib/mysql
+        volume: {}
+      - type: bind
+        source: /home/teja/Developer/go/learning/paylater/paylater-backend/deployments/mysql/init
+        target: /docker-entrypoint-initdb.d
+        bind: {}
+  report:
+    build:
+      context: /home/teja/Developer/go/learning/paylater/paylater-backend
+      dockerfile: services/report/Dockerfile
+    container_name: report-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+        required: true
+    environment:
+      CUSTOMER_SERVICE_URL: http://customer:9093
+      INTERNAL_SERVICE_TOKEN: paylater-internal-dev-token
+      JWT_SECRET: paylater-super-secret-key
+      LEDGER_SERVICE_URL: http://ledger:9094
+      MERCHANT_SERVICE_URL: http://merchant:9092
+      PORT: "9095"
+    image: paylater-report:local
+    networks:
+      paylater-network: null
+    ports:
+      - mode: ingress
+        target: 9095
+        published: "9095"
+        protocol: tcp
+networks:
+  paylater-network:
+    name: paylater-backend_paylater-network
+volumes:
+  mysql-data:
+    name: paylater-backend_mysql-data

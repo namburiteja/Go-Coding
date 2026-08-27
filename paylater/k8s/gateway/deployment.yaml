@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: gateway
+  namespace: paylater
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: gateway
+
+  template:
+    metadata:
+      labels:
+        app: gateway
+
+    spec:
+      containers:
+        - name: gateway
+          image: paylater-gateway:local
+
+          ports:
+            - containerPort: 9090
+
+          env:
+            - name: PORT
+              value: "9090"
+
+            - name: ADMIN_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: ADMIN_SERVICE_URL
+
+            - name: CUSTOMER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: CUSTOMER_SERVICE_URL
+
+            - name: MERCHANT_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: MERCHANT_SERVICE_URL
+
+            - name: LEDGER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: LEDGER_SERVICE_URL
+
+            - name: REPORT_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: REPORT_SERVICE_URL
+
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: CORS_ALLOWED_ORIGINS

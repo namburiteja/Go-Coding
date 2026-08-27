@@ -29,6 +29,11 @@ func main() {
 	customerHandler := customer.NewHandler(customerService)
 
 	router := gin.Default()
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "ok",
+		})
+	})
 	customer.RegisterRoutes(router, customerHandler)
 
 	addr := config.ListenAddr()

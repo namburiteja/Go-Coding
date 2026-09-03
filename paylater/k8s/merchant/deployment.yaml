@@ -19,10 +19,19 @@ spec:
     spec:
       containers:
         - name: merchant
-          image: paylater-merchant:local
+          image: tejanamburi13/paylater-merchant:v1
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 9092
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 
           env:
             - name: DB_HOST
@@ -63,7 +72,7 @@ spec:
 
             - name: PORT
               value: "9092"
-              
+
             - name: INTERNAL_SERVICE_TOKEN
               valueFrom:
                 secretKeyRef:

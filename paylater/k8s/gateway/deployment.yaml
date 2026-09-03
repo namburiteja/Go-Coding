@@ -20,10 +20,19 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: paylater-gateway:local
+          image: tejanamburi13/paylater-gateway:v1
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 9090
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 
           env:
             - name: PORT

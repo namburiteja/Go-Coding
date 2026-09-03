@@ -20,10 +20,19 @@ spec:
     spec:
       containers:
         - name: report
-          image: paylater-report:local
+          image: tejanamburi13/paylater-report:v1
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 9095
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 
           env:
             - name: CUSTOMER_SERVICE_URL

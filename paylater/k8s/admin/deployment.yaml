@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: admin
   namespace: paylater
+
 spec:
   replicas: 1
 
@@ -18,7 +19,8 @@ spec:
     spec:
       containers:
         - name: admin
-          image: paylater-admin:local
+          image: tejanamburi13/paylater-admin:v1
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 9091
@@ -62,3 +64,11 @@ spec:
 
             - name: PORT
               value: "9091"
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

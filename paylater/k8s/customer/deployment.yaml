@@ -20,11 +20,19 @@ spec:
     spec:
       containers:
         - name: customer
-          image: paylater-customer:local
-          imagePullPolicy: Never
+          image: tejanamburi13/paylater-customer:v1
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 9093
+
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 9093
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 2
 
           readinessProbe:
             httpGet:
@@ -32,6 +40,23 @@ spec:
               port: 9093
             initialDelaySeconds: 5
             periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9093
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3
+          
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           
 
           env:

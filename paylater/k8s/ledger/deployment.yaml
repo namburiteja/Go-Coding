@@ -20,10 +20,19 @@ spec:
     spec:
       containers:
         - name: ledger
-          image: paylater-ledger:local
+          image: tejanamburi13/paylater-ledger:v1
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 9094
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 
           env:
             - name: DB_HOST

@@ -20,9 +20,16 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: paylater-frontend:local
+          image: tejanamburi13/paylater-frontend:v1
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 80
 
-          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"

@@ -1,0 +1,63 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: "ap-south-1"
+    AWS_ACCOUNT_ID: "385427225595"
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - export IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}
+      - echo "Image tag: $IMAGE_TAG"
+
+  build:
+    commands:
+      - echo "Running Go tests..."
+      - cd paylater-backend
+      - bash scripts/test-all.sh
+      - cd ..
+
+      - echo "Building admin image..."
+      - docker build -f paylater-backend/services/admin/Dockerfile -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-admin:$IMAGE_TAG paylater-backend
+
+      - echo "Building customer image..."
+      - docker build -f paylater-backend/services/customer/Dockerfile -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-customer:$IMAGE_TAG paylater-backend
+
+      - echo "Building merchant image..."
+      - docker build -f paylater-backend/services/merchant/Dockerfile -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-merchant:$IMAGE_TAG paylater-backend
+
+      - echo "Building ledger image..."
+      - docker build -f paylater-backend/services/ledger/Dockerfile -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-ledger:$IMAGE_TAG paylater-backend
+
+      - echo "Building report image..."
+      - docker build -f paylater-backend/services/report/Dockerfile -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-report:$IMAGE_TAG paylater-backend
+
+      - echo "Building gateway image..."
+      - docker build -f paylater-backend/gateway/Dockerfile -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-gateway:$IMAGE_TAG paylater-backend
+
+      - echo "Building frontend image..."
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-frontend:$IMAGE_TAG paylater-frontend
+
+  post_build:
+    commands:
+      - echo "Pushing images to ECR..."
+
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-admin:$IMAGE_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-customer:$IMAGE_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-merchant:$IMAGE_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-ledger:$IMAGE_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-report:$IMAGE_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-gateway:$IMAGE_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylater-frontend:$IMAGE_TAG
+
+      - echo "Creating image tag artifact..."
+      - mkdir -p build-outputs
+      - echo "$IMAGE_TAG" > build-outputs/image-tag.txt
+      - echo "Build completed successfully."
+
+artifacts:
+  files:
+    - build-outputs/image-tag.txt

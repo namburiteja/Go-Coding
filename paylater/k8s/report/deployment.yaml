@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: report
+  namespace: paylater
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: report
+
+  template:
+    metadata:
+      labels:
+        app: report
+
+    spec:
+      containers:
+        - name: report
+          image: tejanamburi13/paylater-report:v1
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 9095
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          env:
+            - name: CUSTOMER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: CUSTOMER_SERVICE_URL
+
+            - name: MERCHANT_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: MERCHANT_SERVICE_URL
+
+            - name: LEDGER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: paylater-config
+                  key: LEDGER_SERVICE_URL
+
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: paylater-secret
+                  key: INTERNAL_SERVICE_TOKEN
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: paylater-secret
+                  key: JWT_SECRET
+
+            - name: PORT
+              value: "9095"

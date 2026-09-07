@@ -8,10 +8,17 @@ import (
 
 // RegisterRoutes mounts public customer APIs and internal credit endpoints for Ledger.
 func RegisterRoutes(router *gin.Engine, h *Handler) {
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "ok",
+		})
+	})
+
 	customers := router.Group("/customers")
 	{
 		customers.POST("/register", h.RegisterCustomer)
 		customers.POST("/login", h.LoginCustomer)
+
 
 		customers.GET(
 			"",

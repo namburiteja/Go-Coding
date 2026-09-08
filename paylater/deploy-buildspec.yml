@@ -1,0 +1,102 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: "ap-south-1"
+    AWS_ACCOUNT_ID: "385427225595"
+    EC2_INSTANCE_ID: "i-0ce1704ceff856bb2"
+
+phases:
+  build:
+    commands:
+      - echo "Starting PayLater deployment..."
+      - echo "Reading image tag from BuildArtifact..."
+      - export IMAGE_TAG=$(cat "$CODEBUILD_SRC_DIR_BuildArtifact/image-tag.txt")
+      - echo "Deploying image tag: $IMAGE_TAG"
+
+      - |
+        cat > /tmp/deploy.sh <<'EOF'
+        #!/bin/bash
+        set -euo pipefail
+
+        REGION="ap-south-1"
+        ACCOUNT_ID="385427225595"
+        NAMESPACE="paylater"
+        IMAGE_TAG="$1"
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+
+        echo "Refreshing ECR pull secret..."
+
+        ECR_PASSWORD=$(aws ecr get-login-password --region "$REGION")
+
+        kubectl create secret docker-registry ecr-registry \
+          --namespace "$NAMESPACE" \
+          --docker-server="$REGISTRY" \
+          --docker-username=AWS \
+          --docker-password="$ECR_PASSWORD" \
+          --dry-run=client \
+          -o yaml | kubectl apply -f -
+
+        kubectl patch serviceaccount default \
+          -n "$NAMESPACE" \
+          --type='merge' \
+          -p '{"imagePullSecrets":[{"name":"ecr-registry"}]}'
+
+        echo "Updating application images..."
+
+        kubectl set image deployment/admin \
+          admin="$REGISTRY/paylater-admin:$IMAGE_TAG" \
+          -n "$NAMESPACE"
+
+        kubectl set image deployment/customer \
+          customer="$REGISTRY/paylater-customer:$IMAGE_TAG" \
+          -n "$NAMESPACE"
+
+        kubectl set image deployment/frontend \
+          frontend="$REGISTRY/paylater-frontend:$IMAGE_TAG" \
+          -n "$NAMESPACE"
+
+        kubectl set image deployment/gateway \
+          gateway="$REGISTRY/paylater-gateway:$IMAGE_TAG" \
+          -n "$NAMESPACE"
+
+        kubectl set image deployment/ledger \
+          ledger="$REGISTRY/paylater-ledger:$IMAGE_TAG" \
+          -n "$NAMESPACE"
+
+        kubectl set image deployment/merchant \
+          merchant="$REGISTRY/paylater-merchant:$IMAGE_TAG" \
+          -n "$NAMESPACE"
+
+        kubectl set image deployment/report \
+          report="$REGISTRY/paylater-report:$IMAGE_TAG" \
+          -n "$NAMESPACE"
+
+        echo "Waiting for rollouts..."
+
+        kubectl rollout status deployment/admin -n "$NAMESPACE" --timeout=180s
+        kubectl rollout status deployment/customer -n "$NAMESPACE" --timeout=180s
+        kubectl rollout status deployment/frontend -n "$NAMESPACE" --timeout=180s
+        kubectl rollout status deployment/gateway -n "$NAMESPACE" --timeout=180s
+        kubectl rollout status deployment/ledger -n "$NAMESPACE" --timeout=180s
+        kubectl rollout status deployment/merchant -n "$NAMESPACE" --timeout=180s
+        kubectl rollout status deployment/report -n "$NAMESPACE" --timeout=180s
+
+        echo "PayLater deployment completed successfully."
+        EOF
+
+      - chmod +x /tmp/deploy.sh
+
+      - echo "Sending deployment command to EC2..."
+      - |
+        aws ssm send-command \
+          --region "$AWS_DEFAULT_REGION" \
+          --instance-ids "$EC2_INSTANCE_ID" \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands="sudo -u ubuntu bash -c '$(cat /tmp/deploy.sh) \"$IMAGE_TAG\"'" \
+          --comment "PayLater deployment $IMAGE_TAG" \
+          --output text
+
+artifacts:
+  files:
+    - deploy-buildspec.yml

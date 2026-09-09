@@ -5,7 +5,7 @@ phases:
     commands:
       - echo "DEPLOY BUILD STARTED"
       - echo "Reading image tag"
-      - IMAGE_TAG=$(cat "$CODEBUILD_SRC_DIR_BuildArtifact/image-tag.txt")
+      - export IMAGE_TAG=$(cat "$CODEBUILD_SRC_DIR_BuildArtifact/build-outputs/image-tag.txt")
       - echo "IMAGE_TAG=$IMAGE_TAG"
       - echo "Preparing deployment"
       - |

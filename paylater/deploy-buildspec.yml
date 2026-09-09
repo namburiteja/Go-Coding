@@ -12,7 +12,7 @@ phases:
       - echo "Starting PayLater deployment..."
       - echo "Reading image tag from BuildArtifact..."
       - export IMAGE_TAG=$(cat "$CODEBUILD_SRC_DIR_BuildArtifact/image-tag.txt")
-      - echo "Deploying image tag: $IMAGE_TAG"
+      - 'echo "Deploying image tag: $IMAGE_TAG"'
 
       - |
         cat > /tmp/deploy.sh <<'EOF'

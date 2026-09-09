@@ -9,9 +9,9 @@ env:
 phases:
   build:
     commands:
-      - echo "Starting PayLater deployment..."
-      - echo "Reading image tag from BuildArtifact..."
-      - export IMAGE_TAG=$(cat "$CODEBUILD_SRC_DIR_BuildArtifact/image-tag.txt")
+      - 'echo "Starting PayLater deployment..."'
+      - 'echo "Reading image tag from BuildArtifact..."'
+      - 'export IMAGE_TAG=$(cat "$CODEBUILD_SRC_DIR_BuildArtifact/image-tag.txt")'
       - 'echo "Deploying image tag: $IMAGE_TAG"'
 
       - |
@@ -38,57 +38,59 @@ phases:
           -o yaml | kubectl apply -f -
 
         kubectl patch serviceaccount default \
-          -n "$NAMESPACE" \
-          --type='merge' \
-          -p '{"imagePullSecrets":[{"name":"ecr-registry"}]}'
+          --namespace "$NAMESPACE" \
+          --type merge \
+          --patch '{"imagePullSecrets":[{"name":"ecr-registry"}]}'
 
         echo "Updating application images..."
 
         kubectl set image deployment/admin \
           admin="$REGISTRY/paylater-admin:$IMAGE_TAG" \
-          -n "$NAMESPACE"
+          --namespace "$NAMESPACE"
 
         kubectl set image deployment/customer \
           customer="$REGISTRY/paylater-customer:$IMAGE_TAG" \
-          -n "$NAMESPACE"
+          --namespace "$NAMESPACE"
 
         kubectl set image deployment/frontend \
           frontend="$REGISTRY/paylater-frontend:$IMAGE_TAG" \
-          -n "$NAMESPACE"
+          --namespace "$NAMESPACE"
 
         kubectl set image deployment/gateway \
           gateway="$REGISTRY/paylater-gateway:$IMAGE_TAG" \
-          -n "$NAMESPACE"
+          --namespace "$NAMESPACE"
 
         kubectl set image deployment/ledger \
           ledger="$REGISTRY/paylater-ledger:$IMAGE_TAG" \
-          -n "$NAMESPACE"
+          --namespace "$NAMESPACE"
 
         kubectl set image deployment/merchant \
           merchant="$REGISTRY/paylater-merchant:$IMAGE_TAG" \
-          -n "$NAMESPACE"
+          --namespace "$NAMESPACE"
 
         kubectl set image deployment/report \
           report="$REGISTRY/paylater-report:$IMAGE_TAG" \
-          -n "$NAMESPACE"
+          --namespace "$NAMESPACE"
 
         echo "Waiting for rollouts..."
 
-        for deployment in admin customer frontend gateway ledger merchant report; do
+        for deployment in admin customer frontend gateway ledger merchant report
+        do
           kubectl rollout status deployment/"$deployment" \
-            -n "$NAMESPACE" \
+            --namespace "$NAMESPACE" \
             --timeout=180s
         done
 
         echo "PayLater deployment completed successfully."
         EOF
 
-      - chmod +x /tmp/deploy.sh
+      - 'chmod +x /tmp/deploy.sh'
 
-      - echo "Preparing SSM command..."
+      - 'echo "Preparing SSM command..."'
 
       - |
-        export DEPLOY_SCRIPT_B64=$(base64 -w0 /tmp/deploy.sh)
+        DEPLOY_SCRIPT_B64=$(base64 -w0 /tmp/deploy.sh)
+        export DEPLOY_SCRIPT_B64
 
         python3 - <<'PY'
         import json
@@ -96,6 +98,7 @@ phases:
 
         image_tag = os.environ["IMAGE_TAG"]
         script_b64 = os.environ["DEPLOY_SCRIPT_B64"]
+        instance_id = os.environ["EC2_INSTANCE_ID"]
 
         remote_command = (
             f'echo "{script_b64}" | base64 -d > /tmp/deploy.sh && '
@@ -105,7 +108,7 @@ phases:
 
         request = {
             "DocumentName": "AWS-RunShellScript",
-            "InstanceIds": [os.environ["EC2_INSTANCE_ID"]],
+            "InstanceIds": [instance_id],
             "Parameters": {
                 "commands": [remote_command]
             },
@@ -116,7 +119,7 @@ phases:
             json.dump(request, f)
         PY
 
-      - echo "Sending deployment command to EC2..."
+      - 'echo "Sending deployment command to EC2..."'
 
       - |
         COMMAND_ID=$(aws ssm send-command \
@@ -133,8 +136,6 @@ phases:
           --region "$AWS_DEFAULT_REGION" \
           --command-id "$COMMAND_ID" \
           --instance-id "$EC2_INSTANCE_ID"
-
-        echo "EC2 deployment completed."
 
         STATUS=$(aws ssm get-command-invocation \
           --region "$AWS_DEFAULT_REGION" \
@@ -158,6 +159,4 @@ phases:
           exit 1
         fi
 
-artifacts:
-  files:
-    - deploy-buildspec.yml
+        echo "Deployment completed successfully."
